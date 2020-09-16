@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 from  PhysicsTools.NanoAOD.common_cff import *
 
 def addPFCands(process):
-    process.customizedPFCandsTask = cms.Task( )
+    process.customizedPFCandsTask = cms.Task()
     process.schedule.associate(process.customizedPFCandsTask)
     candInput = cms.InputTag("packedPFCandidates")
 
@@ -26,8 +26,8 @@ def addPFCands(process):
                                                             lostInnerHits = Var("lostInnerHits()", int, doc="lost inner hits"),
                                                             trkQuality = Var("?hasTrackDetails()?pseudoTrack().qualityMask():0", int, doc="track quality mask"),
                                                         )
-                                                       )
+                                            )
 
     process.customizedPFCandsTask.add(process.customConstituentsExtTable)
-            
+
     return process
