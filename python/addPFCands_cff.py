@@ -26,8 +26,8 @@ def addPFCands(process):
                                                             lostInnerHits = Var("lostInnerHits()", int, doc="lost inner hits"),
                                                             trkQuality = Var("?hasTrackDetails()?pseudoTrack().qualityMask():0", int, doc="track quality mask"),
                                                             trkPt = Var("?hasTrackDetails()?sqrt(pseudoTrack().momentum().Perp2()):0", float, doc="track transverse momentum", precision=10),
-                                                            trkEta = Var("?hasTrackDetails()?sqrt(pseudoTrack().momentum().Eta()):0", float, doc="track pseudorapidity", precision=10),
-                                                            trkPhi = Var("?hasTrackDetails()?sqrt(pseudoTrack().momentum().Phi()):0", float, doc="track azimuthal angle", precision=10),
+                                                            trkEta = Var("?hasTrackDetails()?sqrt(pseudoTrack().momentum().Eta()):-99", float, doc="track pseudorapidity", precision=10),
+                                                            trkPhi = Var("?hasTrackDetails()?sqrt(pseudoTrack().momentum().Phi()):-99", float, doc="track azimuthal angle", precision=10),
                                                         )
                                             )
 
