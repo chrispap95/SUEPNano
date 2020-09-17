@@ -8,11 +8,11 @@ def addPFCands(process):
 
     process.customConstituentsExtTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
                                                         src = candInput,
-                                                        cut = cms.string(""), #we should not filter after pruning
-                                                        name = cms.string("JetPFCands"),
-                                                        doc = cms.string("interesting particles from AK4 and AK8 jets"),
-                                                        singleton = cms.bool(False), # the number of entries is variable
-                                                        extension = cms.bool(False), # this is the extension table for the AK8 constituents
+                                                        cut = cms.string(""), 
+                                                        name = cms.string("PFCands"),
+                                                        doc = cms.string("PF candidates"),
+                                                        singleton = cms.bool(False), 
+                                                        extension = cms.bool(False), 
                                                         variables = cms.PSet(CandVars,
                                                             puppiWeight = Var("puppiWeight()", float, doc="Puppi weight",precision=10),
                                                             puppiWeightNoLep = Var("puppiWeightNoLep()", float, doc="Puppi weight removing leptons",precision=10),
