@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: step1 --filein file:lalala.root --fileout file:lululu.root --mc --eventcontent NANOAODSIM --datatier NANOAODSIM --conditions 102X_upgrade2018_realistic_v21 --step NANO --nThreads 2 --era Run2_2018,run2_nanoAOD_102Xv1 --python_filename autumn18_mc_NANO.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n 10000
+# with command line options: step1 --filein file:XXX.root --fileout file:YYY.root --mc --eventcontent NANOAODSIM --datatier NANOAODSIM --conditions 102X_upgrade2018_realistic_v21 --step NANO --nThreads 2 --era Run2_2018,run2_nanoAOD_102Xv1 --python_filename autumn18_mc_NANO.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n 10000
 import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
