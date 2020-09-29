@@ -7,14 +7,14 @@ This format can be used with [fastjet](http://fastjet.fr) directly.
 
 **THIS IS A DEVELOPMENT BRANCH**
 
-For **UL** 2016, 2017 and 2018 data and MC **NanoAODv6** according to the [XPOG](https://gitlab.cern.ch/cms-nanoAOD/nanoaod-doc/-/wikis/Releases/NanoAODv6) and [PPD](https://twiki.cern.ch/twiki/bin/view/CMS/PdmVLegacy2017Analysis) recommendations:
+For Autumn18 data and MC **NanoAODv7** according to the [XPOG](https://gitlab.cern.ch/cms-nanoAOD/nanoaod-doc/-/wikis/Releases/NanoAODv6) and [PPD](https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmVAnalysisSummaryTable) recommendations:
 
 ```
-cmsrel  CMSSW_10_6_14
-cd  CMSSW_10_6_14/src
+cmsrel  CMSSW_10_2_22
+cd  CMSSW_10_2_22/src
 cmsenv
 git cms-addpkg PhysicsTools/NanoAOD
-git clone https://github.com/dr-stringfellow/SUEPNano.git PhysicsTools/SUEPNano
+git clone -b autumn18 https://github.com/dr-stringfellow/SUEPNano.git PhysicsTools/SUEPNano
 scram b -j 10
 cd PhysicsTools/SUEPNano/test
 ```
@@ -22,15 +22,9 @@ Note: This configuration has been tested for this combination of CMSSW release, 
 
 ## Local Usage:
 
-2017 MC:
+2018 MC:
 ```
-cmsRun nano106X_on_mini106X_2017_mc_NANO.py
+cmsRun autumn18_mc_NANO.py
 ```
 
-## How to create website with nanoAOD content
-
-To create nice websites like [this one](http://algomez.web.cern.ch/algomez/testWeb/JMECustomNano102x_mc_v01.html#Jet) with the content of nanoAOD, use the `inspectNanoFile.py` file from the `PhysicsTools/nanoAOD` package as:
-```
-python PhysicsTools/NanoAOD/test/inspectNanoFile.py NANOAOD.root -s website_with_collectionsize.html -d website_with_collectiondescription.html
-```
 
