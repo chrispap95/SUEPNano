@@ -22,6 +22,7 @@ def addPFCands(process):
                                                             dzErr = Var("?hasTrackDetails()?dzError():-1", float, doc="pf dz err", precision=10),
                                                             d0 = Var("?hasTrackDetails()?dxy():-1", float, doc="pf d0", precision=10),
                                                             d0Err = Var("?hasTrackDetails()?dxyError():-1", float, doc="pf d0 err", precision=10),
+                                                            fromPV = Var("fromPV()", int, doc="between 0 and 3, quality of primary vertex association"),
                                                             pvAssocQuality = Var("pvAssociationQuality()", int, doc="primary vertex association quality"),
                                                             lostInnerHits = Var("lostInnerHits()", int, doc="lost inner hits"),
                                                             trkQuality = Var("?hasTrackDetails()?pseudoTrack().qualityMask():0", int, doc="track quality mask"),
