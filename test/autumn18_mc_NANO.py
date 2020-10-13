@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: step1 --filein file:XXX.root --fileout file:YYY.root --mc --eventcontent NANOAODSIM --datatier NANOAODSIM --conditions 102X_upgrade2018_realistic_v21 --step NANO --nThreads 2 --era Run2_2018,run2_nanoAOD_102Xv1 --python_filename autumn18_mc_NANO.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n 10000
+# with command line options: step1 --filein file:XXX.root --fileout file:YYY.root --mc --eventcontent NANOAODSIM --datatier NANOAODSIM --conditions 102X_upgrade2018_realistic_v21 --step NANO --nThreads 1 --era Run2_2018,run2_nanoAOD_102Xv1 --python_filename autumn18_mc_NANO.py --no_exec --customise PhysicsTools/SUEPNano/nano_suep_cff.SUEPNano_customize -n -1
 import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
@@ -37,7 +37,7 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    annotation = cms.untracked.string('step1 nevts:10000'),
+    annotation = cms.untracked.string('step1 nevts:-1'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
@@ -71,21 +71,16 @@ process.schedule = cms.Schedule(process.nanoAOD_step,process.endjob_step,process
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)
 
-#Setup FWK for multithreaded
-process.options.numberOfThreads=cms.untracked.uint32(1)
-process.options.numberOfStreams=cms.untracked.uint32(0)
-
-
 # customisation of the process.
 
 # Automatic addition of the customisation function from PhysicsTools.NanoAOD.nano_cff
-from PhysicsTools.NanoAOD.nano_cff import nanoAOD_customizeMC
+from PhysicsTools.NanoAOD.nano_cff import nanoAOD_customizeMC 
 
 #call to customisation function nanoAOD_customizeMC imported from PhysicsTools.NanoAOD.nano_cff
 process = nanoAOD_customizeMC(process)
 
-# Automatic addition of the customisation functions from PhysicsTools.SUEPNano.nano_suep_cff
-from PhysicsTools.SUEPNano.nano_suep_cff import SUEPNano_customize
+# Automatic addition of the customisation function from PhysicsTools.SUEPNano.nano_suep_cff
+from PhysicsTools.SUEPNano.nano_suep_cff import SUEPNano_customize 
 
 #call to customisation function SUEPNano_customize imported from PhysicsTools.SUEPNano.nano_suep_cff
 process = SUEPNano_customize(process)
