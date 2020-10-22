@@ -14,7 +14,7 @@ cmsrel  CMSSW_10_2_22
 cd  CMSSW_10_2_22/src
 cmsenv
 git cms-addpkg PhysicsTools/NanoAOD
-git clone -b autumn18 https://github.com/dr-stringfellow/SUEPNano.git PhysicsTools/SUEPNano
+git clone -b autumn18 https://github.com/SUEPPhysics/SUEPNano.git PhysicsTools/SUEPNano
 scram b -j 10
 cd PhysicsTools/SUEPNano/test
 ```
