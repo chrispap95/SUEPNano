@@ -31,3 +31,14 @@ cmsRun ul18_mc_NANO.py
 ```
 
 
+## For Centrally produced SUEP samples with multiple points in the scan:
+
+splitTrees.py can be used to split a set of input nanoAOD samples based on the correponding gen-level setup and -optionally- merge the resulting chunks together (i.e. same signal point coming from different nanosuep files). Usage is:
+
+```
+python splitTrees.py --input [input directory] --output [output directory] --jobs [number of cores] --hadd 
+```
+
+haddnano.py is just a modified version of the standard cms-sw tool to reduce verbosity a bit
+
+
