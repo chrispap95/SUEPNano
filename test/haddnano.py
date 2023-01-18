@@ -49,7 +49,7 @@ for e in fileHandles[0].GetListOfKeys() :
 			otherBranches=set([ x.GetName() for x in otherObj.GetListOfBranches() ])
 			missingBranches=list(branchNames-otherBranches)
 			additionalBranches=list(otherBranches-branchNames)
-			print "missing:",missingBranches,"\n Additional:",additionalBranches
+			#print "missing:",missingBranches,"\n Additional:",additionalBranches
 			for br in missingBranches :
 				#fill "Other"	
 				zeroFill(otherObj,br,obj.GetListOfBranches().FindObject(br))
