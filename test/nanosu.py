@@ -41,7 +41,16 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(params.maxEv
 
 
 if params.isMC == True:
-    print("is MC?")
+    if params.era == "2016":
+        os.system('cmsRun ' +os.environ['CMSSW_BASE']+'/src/PhysicsTools/SUEPNano/test/NANO_MC_2016.py')
+    elif params.era == "2016apv":
+        os.system('cmsRun ' +os.environ['CMSSW_BASE']+'/src/PhysicsTools/SUEPNano/test/NANO_MC_2016apv.py')
+    elif params.era == "2017":
+        os.system('cmsRun ' +os.environ['CMSSW_BASE']+'/src/PhysicsTools/SUEPNano/test/NANO_MC_2017.py')
+    elif params.era == "2018":
+        os.system('cmsRun ' +os.environ['CMSSW_BASE']+'/src/PhysicsTools/SUEPNano/test/NANO_MC_2018.py')
+    else:
+        print("Era is nonsensical")
 else:
     if params.era == "2016":
         os.system('cmsRun ' +os.environ['CMSSW_BASE']+'/src/PhysicsTools/SUEPNano/test/NANO_data_2016.py')
@@ -51,6 +60,5 @@ else:
         os.system('cmsRun ' +os.environ['CMSSW_BASE']+'/src/PhysicsTools/SUEPNano/test/NANO_data_2017.py')
     elif params.era == "2018":
         os.system('cmsRun ' +os.environ['CMSSW_BASE']+'/src/PhysicsTools/SUEPNano/test/NANO_data_2018.py')
-        #process.load('PhysicsTools/SUEPNano/NANO_data_2018_cff')
     else:
         print("Era is nonsensical")
