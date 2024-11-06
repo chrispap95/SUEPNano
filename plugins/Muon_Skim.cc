@@ -1,3 +1,10 @@
+/*
+  Description: Skim events for at least 3 muons that pass the cleaning selections: 
+  pt, leading muon pt, eta, dxy, dz, and isMediumMuon
+
+  Author: Christos Papageorgakis
+*/
+
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDFilter.h"
