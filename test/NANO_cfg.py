@@ -1,4 +1,4 @@
-# Run using: cmsRun NANO_MC_2018.py outputFile=YYY.root maxEvents=ZZZ
+# Run using: cmsRun NANO_cfg.py outputFile=YYY.root maxEvents=ZZZ
 
 import FWCore.ParameterSet.Config as cms
 
@@ -192,6 +192,8 @@ from PhysicsTools.SUEPNano.nano_suep_cff import SUEPNano_customize
 
 # call to customisation function SUEPNano_customize imported from PhysicsTools.SUEPNano.nano_suep_cff
 process = SUEPNano_customize(process)
+
+process.nanoSequenceMC.remove(process.rivetProducerHTXS)
 
 # End of customisation functions
 
