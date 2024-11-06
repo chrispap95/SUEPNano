@@ -1,0 +1,7 @@
+# Ignore all temp files, log files, and crab directories
+*.pyc
+crab_*/
+crab.log
+*.json
+*.log
+*.root

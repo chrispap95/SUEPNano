@@ -1,0 +1,6 @@
+<use   name="FWCore/Framework"/>
+<use   name="FWCore/ParameterSet"/>
+<use   name="DataFormats/PatCandidates"/>
+<library name="SUEPNanoplugins" file="Muon_Skim.cc">
+<flags   EDM_PLUGIN="1"/>
+</library>
