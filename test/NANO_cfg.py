@@ -1,4 +1,8 @@
 # Run using: cmsRun NANO_cfg.py outputFile=YYY.root maxEvents=ZZZ
+# It will do the following in order:
+#   1) run over the input miniAOD file(s) 
+#   2) apply a skim to select events of interest using the HLT path and the muon selections
+#   2) produce a nanoAOD file with the skimmed events including the PF candidates.
 
 import FWCore.ParameterSet.Config as cms
 
@@ -142,6 +146,17 @@ if params.isMC:
 else:
     process.GlobalTag = GlobalTag(process.GlobalTag, "106X_dataRun2_v35", "")
 
+# Keep track of the gen weights
+process.genWeightSum = cms.EDProducer(
+    "GenWeightProducer",
+    genEventInfo=cms.InputTag("generator"),
+)
+process.genweight_step = cms.Path(process.genWeightSum)
+
+process.NANOAODSIMoutput.outputCommands.extend([
+    'keep nanoaodMergeableCounterTable_genWeightSum_*_*',
+])
+
 # HLT filter and skimmer
 if params.era == "2016apv" or params.era == "2016":
     process.load("PhysicsTools.SUEPNano.hlt_skim_2016_cff")
@@ -152,12 +167,12 @@ elif params.era == "2018":
 else:
     raise ValueError("Invalid era: %s" % params.era)
 process.load("PhysicsTools.SUEPNano.muon_skim_cff")
-
 process.skim_step = cms.Path(process.hltHighLevel * process.muon_skim)
 
 # And also at the start of the nano not to run code that we don't need
 process.nanoSequenceMC.insert(0, process.muon_skim)
 process.nanoSequenceMC.insert(0, process.hltHighLevel)
+process.nanoSequenceMC.insert(0, process.genWeightSum)
 
 # Path and EndPath definitions
 process.nanoAOD_step = cms.Path(process.nanoSequenceMC)
@@ -166,6 +181,7 @@ process.NANOAODSIMoutput_step = cms.EndPath(process.NANOAODSIMoutput)
 
 # Schedule definition
 process.schedule = cms.Schedule(
+    process.genweight_step,
     process.skim_step,
     process.nanoAOD_step,
     process.endjob_step,
@@ -194,6 +210,7 @@ from PhysicsTools.SUEPNano.nano_suep_cff import SUEPNano_customize
 process = SUEPNano_customize(process)
 
 process.nanoSequenceMC.remove(process.rivetProducerHTXS)
+process.nanoSequenceMC.remove(process.HTXSCategoryTable)
 
 # End of customisation functions
 

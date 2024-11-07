@@ -1,6 +1,8 @@
-<use   name="FWCore/Framework"/>
-<use   name="FWCore/ParameterSet"/>
-<use   name="DataFormats/PatCandidates"/>
-<library name="SUEPNanoplugins" file="Muon_Skim.cc">
-<flags   EDM_PLUGIN="1"/>
-</library>
+<use name="FWCore/Framework"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/Utilities"/>
+<use name="DataFormats/PatCandidates"/>
+<use name="DataFormats/NanoAOD"/>
+<use name="SimDataFormats/GeneratorProducts"/>
+<use name="PhysicsTools/SUEPNano"/>
+<flags EDM_PLUGIN="1"/>
