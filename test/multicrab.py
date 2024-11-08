@@ -1,55 +1,81 @@
-name = 'NANO_UL18'
+import json
+import time
+import argparse
+from multiprocessing import Process
+from CRABClient import UserUtilities
+from CRABAPI import RawCommand
+
 running_options = ["isCRAB=True"]
 
-dataset = {
-    "QCD_Pt-15To20_MuEnrichedPt5" : "/QCD_Pt-15To20_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-20To30_MuEnrichedPt5" : "/QCD_Pt-20To30_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-30To50_MuEnrichedPt5" : "/QCD_Pt-30To50_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-50To80_MuEnrichedPt5" : "/QCD_Pt-50To80_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-80To120_MuEnrichedPt5" : "/QCD_Pt-80To120_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-120To170_MuEnrichedPt5" : "/QCD_Pt-120To170_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-170To300_MuEnrichedPt5" : "/QCD_Pt-170To300_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-300To470_MuEnrichedPt5" : "/QCD_Pt-300To470_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-470To600_MuEnrichedPt5" : "/QCD_Pt-470To600_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-600To800_MuEnrichedPt5" : "/QCD_Pt-600To800_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-800To1000_MuEnrichedPt5" : "/QCD_Pt-800To1000_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-    "QCD_Pt-1000_MuEnrichedPt5" : "/QCD_Pt-1000_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM",
-}
+def make_request_name(sample):
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    return sample + "_" + timestamp
 
-listOfSamples = [k for k in dataset.keys()]
+def make_config(args, sample, dataset):
+    config_ = UserUtilities.config()
+
+    config_.General.workArea = 'crab_' + args.campaign
+    config_.General.transferOutputs = True
+    config_.General.transferLogs = True
+
+    config_.JobType.pluginName = 'Analysis'
+    config_.JobType.psetName = 'NANO_cfg.py' 
+    config_.JobType.maxMemoryMB = 2000
+    config_.JobType.pyCfgParams = running_options
+    config_.JobType.allowUndistributedCMSSW = True
+
+    config_.Data.inputDBS = 'global'
+    config_.Data.splitting = 'FileBased'
+    config_.Data.publication = False
+    config_.Data.unitsPerJob = 1
+    config_.Data.totalUnits = 1
+    config_.Data.outLFNDirBase = args.output
+    config_.Site.storageSite = 'T3_US_FNALLPC'
+
+    config_.General.requestName = make_request_name(sample)
+    config_.Data.inputDataset = dataset
+    config_.Data.outputDatasetTag = sample
+    
+    return config_
+
+def submit(config):
+    res = RawCommand.crabCommand('submit', config = config)
+    return
+
+def get_args():
+    parser = argparse.ArgumentParser(description='Submit CRAB jobs')
+    parser.add_argument(
+        '-d', '--dataset', type=str, help='JSON file with dataset names', required=True
+    )
+    parser.add_argument(
+        '-c', '--campaign', type=str, help='Name of the campaign for the CRAB area', default='NANO_UL18'
+    )
+    parser.add_argument(
+        '-o', 
+        '--output', 
+        type=str, 
+        help='Output location', 
+        default='/store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024'
+    )
+    parser.add_argument(
+        '--dryrun', action='store_true', help='Dry run - print the commands without executing them'
+    )
+    args = parser.parse_args()
+    return args
 
 if __name__ == '__main__':
+    args = get_args()
 
-   from CRABClient.UserUtilities import config
-   config = config()
+    datasets = {}
+    with open(args.dataset, 'r') as f:
+        datasets = json.load(f)
 
-   from CRABAPI.RawCommand import crabCommand
-   from multiprocessing import Process
-
-   def submit(config):
-       res = crabCommand('submit', config = config )
-
-   config.General.workArea = 'crab_'+name
-   config.General.transferOutputs = True
-   config.General.transferLogs = True
-
-   config.JobType.pluginName = 'Analysis'
-   config.JobType.psetName = 'NANO_cfg.py' 
-   config.JobType.maxMemoryMB = 2000
-
-   config.JobType.pyCfgParams = running_options
-
-   config.Data.inputDBS = 'global'
-   config.Data.splitting = 'FileBased'
-   config.Data.publication = False
-   config.Data.unitsPerJob = 5
-   config.Data.outLFNDirBase = '/store/user/chpapage/SUEPNano_Jul2024'
-   config.Site.storageSite = 'T3_US_FNALLPC'
-
-   for sample in listOfSamples:
-      config.General.requestName = sample
-      config.Data.inputDataset = dataset[sample]
-      config.Data.outputDatasetTag = sample
-      p = Process(target=submit, args=(config,))
-      p.start()
-      p.join()
+    for sample in datasets:
+        config = make_config(args, sample, datasets[sample])
+        if args.dryrun:
+            print(config.pythonise_())
+            print
+            continue
+        p = Process(target=submit, args=(config,))
+        p.start()
+        p.join()
