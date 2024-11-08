@@ -1,6 +1,6 @@
 # Run using: cmsRun NANO_cfg.py outputFile=YYY.root maxEvents=ZZZ
 # It will do the following in order:
-#   1) run over the input miniAOD file(s) 
+#   1) run over the input miniAOD file(s)
 #   2) apply a skim to select events of interest using the HLT path and the muon selections
 #   2) produce a nanoAOD file with the skimmed events including the PF candidates.
 
@@ -153,9 +153,11 @@ process.genWeightSum = cms.EDProducer(
 )
 process.genweight_step = cms.Path(process.genWeightSum)
 
-process.NANOAODSIMoutput.outputCommands.extend([
-    'keep nanoaodMergeableCounterTable_genWeightSum_*_*',
-])
+process.NANOAODSIMoutput.outputCommands.extend(
+    [
+        "keep nanoaodMergeableCounterTable_genWeightSum_*_*",
+    ]
+)
 
 # HLT filter and skimmer
 if params.era == "2016apv" or params.era == "2016":

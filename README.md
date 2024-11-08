@@ -25,8 +25,14 @@ cd PhysicsTools/SUEPNano/test
 
 
 ## Skimming
-
-The samples processed with the scripts in this reposiotry are skimmed to include only the events that pass the desired HLT path and have at least three muons that pass basic quality criteria.
+The samples processed with the scripts in this reposiotry are skimmed to include only the events that pass the desired HLT path:
+```
+    "HLT_TripleMu_10_5_5_DZ_v*" OR
+    "HLT_TripleMu_12_10_5_v*" OR
+    "HLT_TripleMu_5_3_3_Mass3p8_DZ_v*" OR
+    "HLT_TripleMu_5_3_3_Mass3p8to60_DZ_v*"
+```
+and have at least three muons that pass the basic quality requirements. The `genEventSumw` before the skimming is included in the Runs tree as `genEventSumwPreSkim` for normalization purposes.
 
 
 ## Local Usage:
@@ -34,6 +40,15 @@ The samples processed with the scripts in this reposiotry are skimmed to include
 cmsRun NANO_cfg.py isMC=True era=2018 maxEvents=10 verbose=True inputFiles=file:/path/to/your/file.root
 ```
 The input file should be AOD or miniAOD.
+
+## CRAB Usage:
+The following command will submit jobs to the CRAB to process the datasets in the `datasets.json` file and store the output in the `/store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024` directory:
+```
+python multicrab.py -d datasets.json -c NANO_UL18 -o /store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024
+```
+You can look at the crab configs before submitting them by using the `--nosubnit` option.
+The status can be checked with the usual crab commands.
+
 
 ## For Centrally produced SUEP samples with multiple points in the scan:
 

@@ -2,6 +2,5 @@
 *.pyc
 crab_*/
 crab.log
-*.json
 *.log
 *.root
