@@ -2,7 +2,7 @@
 Script to submit CRAB jobs for multiple datasets
 
 Example usage:
-python multicrab.py -d datasets.json -c NANO_UL18 -o /store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024
+python multicrab.py -d datasets.json -c NANO_UL18 -o /store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024/
 """
 
 import json
@@ -15,35 +15,42 @@ from CRABAPI import RawCommand
 running_options = ["isCRAB=True"]
 
 
-def make_request_name(sample):
+def make_dataset_tag(dataset):
+    return dataset.split("/")[1]
+
+
+def make_request_name(dataset):
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    return sample + "_" + timestamp
+    return make_dataset_tag(dataset) + "_" + timestamp
 
 
-def make_config(args, sample, dataset):
+def make_config(args, dataset):
     config_ = UserUtilities.config()
 
     config_.General.workArea = "crab_" + args.campaign
     config_.General.transferOutputs = True
     config_.General.transferLogs = True
+    config_.General.requestName = make_request_name(dataset)
 
     config_.JobType.pluginName = "Analysis"
     config_.JobType.psetName = "NANO_cfg.py"
     config_.JobType.maxMemoryMB = 2000
     config_.JobType.pyCfgParams = running_options
     config_.JobType.allowUndistributedCMSSW = True
+    config_.JobType.maxJobRuntimeMin = 300
 
     config_.Data.inputDBS = "global"
     config_.Data.splitting = "FileBased"
     config_.Data.publication = False
-    config_.Data.unitsPerJob = 1
-    config_.Data.totalUnits = 1
+    config_.Data.unitsPerJob = 20
+    if args.validation:
+        config_.Data.unitsPerJob = 1
+        config_.Data.totalUnits = 1
     config_.Data.outLFNDirBase = args.output
-    config_.Site.storageSite = "T3_US_FNALLPC"
-
-    config_.General.requestName = make_request_name(sample)
     config_.Data.inputDataset = dataset
-    config_.Data.outputDatasetTag = sample
+    config_.Data.outputDatasetTag = make_dataset_tag(dataset)
+
+    config_.Site.storageSite = "T3_US_FNALLPC"
 
     return config_
 
@@ -73,7 +80,7 @@ def get_args():
         default="/store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024",
     )
     parser.add_argument(
-        "-nosubmit",
+        "--nosubmit",
         action="store_true",
         help="Do not submit the jobs, just print the commands",
     )
@@ -82,6 +89,11 @@ def get_args():
         action="store_true",
         help="Dry run - will try to benchmark the jobs",
     )
+    parser.add_argument(
+        "--validation",
+        action="store_true",
+        help="Submit a validation job with 1 unit",
+    )
     args = parser.parse_args()
     return args
 
@@ -89,12 +101,12 @@ def get_args():
 if __name__ == "__main__":
     args = get_args()
 
-    datasets = {}
+    datasets = []
     with open(args.dataset, "r") as f:
         datasets = json.load(f)
 
-    for sample in datasets:
-        config = make_config(args, sample, datasets[sample])
+    for dataset in datasets:
+        config = make_config(args, dataset)
         if args.nosubmit:
             print(config.pythonise_())
             print
