@@ -19,8 +19,8 @@ def get_args():
     parser.add_argument(
         "-o",
         "--output",
-        default="incomplete_datasets.json",
-        help="Output JSON file name (default: incomplete_datasets.json)",
+        default="crab_monitor_history/incomplete_datasets.json",
+        help="Output JSON file name (default: crab_monitor_history/incomplete_datasets.json)",
     )
     return parser.parse_args()
 
