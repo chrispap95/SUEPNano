@@ -1,4 +1,4 @@
-# Run using: cmsRun NANO_cfg.py outputFile=YYY.root maxEvents=ZZZ
+# Run using: cmsRun NANO_mc_cfg.py outputFile=YYY.root maxEvents=ZZZ
 # It will do the following in order:
 #   1) run over the input miniAOD file(s)
 #   2) apply a skim to select events of interest using the HLT path and the muon selections
@@ -10,14 +10,6 @@ import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 
 params = VarParsing("analysis")
-
-params.register(
-    "isMC",
-    True,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.bool,
-    "Flag to indicate whether the sample is simulation or data",
-)
 
 params.setDefault("maxEvents", -1)
 
@@ -80,13 +72,9 @@ process.load("Configuration.StandardSequences.Services_cff")
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.load("Configuration.EventContent.EventContent_cff")
-if params.isMC:
-    process.load("SimGeneral.MixingModule.mixNoPU_cfi")
+process.load("SimGeneral.MixingModule.mixNoPU_cfi")
 process.load("Configuration.StandardSequences.GeometryRecoDB_cff")
-if params.isMC:
-    process.load("Configuration.StandardSequences.MagneticField_cff")
-else:
-    process.load("Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff")
+process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load("HLTrigger.HLTfilters.hltHighLevel_cfi")
 process.load("PhysicsTools.NanoAOD.nano_cff")
 process.load("Configuration.StandardSequences.EndOfProcess_cff")
@@ -128,23 +116,18 @@ process.NANOAODSIMoutput = cms.OutputModule(
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
 
-if params.isMC:
-    if params.era == "2016apv":
-        process.GlobalTag = GlobalTag(
-            process.GlobalTag, "106X_mcRun2_asymptotic_preVFP_v11", ""
-        )
-    elif params.era == "2016":
-        process.GlobalTag = GlobalTag(
-            process.GlobalTag, "106X_mcRun2_asymptotic_v17", ""
-        )
-    elif params.era == "2017":
-        process.GlobalTag = GlobalTag(process.GlobalTag, "106X_mc2017_realistic_v9", "")
-    elif params.era == "2018":
-        process.GlobalTag = GlobalTag(
-            process.GlobalTag, "106X_upgrade2018_realistic_v16_L1v1", ""
-        )
-else:
-    process.GlobalTag = GlobalTag(process.GlobalTag, "106X_dataRun2_v35", "")
+if params.era == "2016apv":
+    process.GlobalTag = GlobalTag(
+        process.GlobalTag, "106X_mcRun2_asymptotic_preVFP_v11", ""
+    )
+elif params.era == "2016":
+    process.GlobalTag = GlobalTag(process.GlobalTag, "106X_mcRun2_asymptotic_v17", "")
+elif params.era == "2017":
+    process.GlobalTag = GlobalTag(process.GlobalTag, "106X_mc2017_realistic_v9", "")
+elif params.era == "2018":
+    process.GlobalTag = GlobalTag(
+        process.GlobalTag, "106X_upgrade2018_realistic_v16_L1v1", ""
+    )
 
 # Keep track of the gen weights
 process.genWeightSum = cms.EDProducer(
@@ -215,12 +198,6 @@ process.nanoSequenceMC.remove(process.rivetProducerHTXS)
 process.nanoSequenceMC.remove(process.HTXSCategoryTable)
 
 # End of customisation functions
-
-# Automatic addition of the customisation function from Configuration.DataProcessing.Utils
-from Configuration.DataProcessing.Utils import addMonitoring
-
-# call to customisation function addMonitoring imported from Configuration.DataProcessing.Utils
-process = addMonitoring(process)
 
 # Customisation from command line
 process.add_(cms.Service("InitRootHandlers", EnableIMT=cms.untracked.bool(False)))

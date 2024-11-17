@@ -2,5 +2,8 @@
 *.pyc
 crab_*/
 crab.log
+condor/
+docker_stderror
 *.log
 *.root
+*.tar.gz

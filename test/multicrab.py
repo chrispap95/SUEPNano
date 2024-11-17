@@ -33,16 +33,16 @@ def make_config(args, dataset):
     config_.General.requestName = make_request_name(dataset)
 
     config_.JobType.pluginName = "Analysis"
-    config_.JobType.psetName = "NANO_cfg.py"
-    config_.JobType.maxMemoryMB = 2000
+    config_.JobType.psetName = "NANO_data_cfg.py" if args.isdata else "NANO_mc_cfg.py"
+    config_.JobType.maxMemoryMB = 3000
     config_.JobType.pyCfgParams = running_options
     config_.JobType.allowUndistributedCMSSW = True
-    config_.JobType.maxJobRuntimeMin = 300
+    config_.JobType.maxJobRuntimeMin = 400
 
     config_.Data.inputDBS = "global"
     config_.Data.splitting = "FileBased"
     config_.Data.publication = False
-    config_.Data.unitsPerJob = 20
+    config_.Data.unitsPerJob = 10
     if args.validation:
         config_.Data.unitsPerJob = 1
         config_.Data.totalUnits = 1
@@ -93,6 +93,11 @@ def get_args():
         "--validation",
         action="store_true",
         help="Submit a validation job with 1 unit",
+    )
+    parser.add_argument(
+        "--isdata",
+        action="store_true",
+        help="To be set if the dataset is data",
     )
     args = parser.parse_args()
     return args
