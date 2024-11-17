@@ -15,7 +15,9 @@ from CRABAPI import RawCommand
 running_options = ["isCRAB=True"]
 
 
-def make_dataset_tag(dataset):
+def make_dataset_tag(dataset, long=False):
+    if long:
+        return dataset.replace("/", "_")[1:]
     return dataset.split("/")[1]
 
 
@@ -30,7 +32,11 @@ def make_config(args, dataset):
     config_.General.workArea = "crab_" + args.campaign
     config_.General.transferOutputs = True
     config_.General.transferLogs = True
-    config_.General.requestName = make_request_name(dataset)
+    config_.General.requestName = (
+        make_request_name(dataset, long=True)
+        if args.isdata
+        else make_request_name(dataset)
+    )
 
     config_.JobType.pluginName = "Analysis"
     config_.JobType.psetName = "NANO_data_cfg.py" if args.isdata else "NANO_mc_cfg.py"

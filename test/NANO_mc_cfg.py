@@ -131,8 +131,8 @@ elif params.era == "2018":
 
 # Keep track of the gen weights
 process.genWeightSum = cms.EDProducer(
-    "GenWeightProducer",
-    genEventInfo=cms.InputTag("generator"),
+    "GenWeightsTablePreSkimProducer",
+    genEvent=cms.InputTag("generator"),
 )
 process.genweight_step = cms.Path(process.genWeightSum)
 

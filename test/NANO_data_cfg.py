@@ -157,10 +157,10 @@ process.options.numberOfStreams = cms.untracked.uint32(0)
 # customisation of the process.
 
 # Automatic addition of the customisation function from PhysicsTools.NanoAOD.nano_cff
-from PhysicsTools.NanoAOD.nano_cff import nanoAOD_customize
+from PhysicsTools.NanoAOD.nano_cff import nanoAOD_customizeData
 
 # call to customisation function nanoAOD_customizeMC imported from PhysicsTools.NanoAOD.nano_cff
-process = nanoAOD_customize(process)
+process = nanoAOD_customizeData(process)
 
 # Automatic addition of the customisation function from PhysicsTools.SUEPNano.nano_suep_cff
 from PhysicsTools.SUEPNano.nano_suep_cff import SUEPNano_customize
