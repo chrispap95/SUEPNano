@@ -6,7 +6,7 @@
 #ifndef PhysicsTools_SUEPNano_Counters_h
 #define PhysicsTools_SUEPNano_Counters_h
 
-namespace {
+namespace counters {
     ///  ---- Cache object for running sums of weights ----
     struct Counter {
         Counter() : num(0), sumw(0), sumw2(0) {}

@@ -17,60 +17,77 @@
 #include "DataFormats/NanoAOD/interface/FlatTable.h"
 #include "DataFormats/NanoAOD/interface/MergeableCounterTable.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenLumiInfoHeader.h"
 
 #include "PhysicsTools/SUEPNano/plugins/Counters.h"
 
-#include <iostream>
-#include <atomic>
-#include <memory>
+#include "boost/algorithm/string.hpp"
 
-
-class GenWeightProducer : public edm::global::EDProducer<edm::StreamCache<CounterMap>,
-                                                        edm::RunSummaryCache<CounterMap>, 
-                                                        edm::EndRunProducer> {
+class GenWeightsTablePreSkimProducer : public edm::global::EDProducer<edm::StreamCache<counters::CounterMap>,
+                                                                      edm::RunSummaryCache<counters::CounterMap>, 
+                                                                      edm::EndRunProducer> {
     public:
-        explicit GenWeightProducer(edm::ParameterSet const& params)
-        : genTag_(consumes<GenEventInfoProduct>(params.getParameter<edm::InputTag>("genEventInfo"))) {
+        GenWeightsTablePreSkimProducer(edm::ParameterSet const& params)
+        : genTag_(consumes<GenEventInfoProduct>(params.getParameter<edm::InputTag>("genEvent"))),
+          genLumiInfoHeadTag_(
+            mayConsume<GenLumiInfoHeader, edm::InLumi>(params.getParameter<edm::InputTag>("genLumiInfoHeader"))) {
             produces<nanoaod::FlatTable>();
+            produces<std::string>("genModel");
             produces<nanoaod::MergeableCounterTable, edm::Transition::EndRun>();
         }
 
-        ~GenWeightProducer() override {}
+        ~GenWeightsTablePreSkimProducer() override {}
+
+        // Initialize an empty counter map for the global run
+        std::shared_ptr<counters::CounterMap> globalBeginRunSummary(edm::Run const&, edm::EventSetup const&) const override {
+            return std::make_shared<counters::CounterMap>();
+        }
+
+        // Clear the counter map at the beginning of each run
+        void streamBeginRun(edm::StreamID id, edm::Run const&, edm::EventSetup const&) const override {
+            streamCache(id)->clear();
+        }
 
         // Initialize an empty counter map for each stream
-        std::unique_ptr<CounterMap> beginStream(edm::StreamID id) const override {
-            return std::make_unique<CounterMap>();
+        std::unique_ptr<counters::CounterMap> beginStream(edm::StreamID) const override {
+            return std::make_unique<counters::CounterMap>();
+        }
+
+        void streamBeginLuminosityBlock(edm::StreamID id,
+                                        edm::LuminosityBlock const& lumiBlock,
+                                        edm::EventSetup const&) const override {
+            auto counterMap = streamCache(id);
+            edm::Handle<GenLumiInfoHeader> genLumiInfoHead;
+            lumiBlock.getByToken(genLumiInfoHeadTag_, genLumiInfoHead);
+
+            std::string label;
+            if (genLumiInfoHead.isValid()) {
+                label = genLumiInfoHead->configDescription();
+                boost::replace_all(label, "-", "_");
+                boost::replace_all(label, "/", "_");
+            }
+            counterMap->setLabel(label);
         }
 
         // Produce the generator weight and store it in the stream counter map
         void produce(edm::StreamID id, edm::Event& iEvent, const edm::EventSetup& iSetup) const override {
+            counters::Counter* counter = streamCache(id)->get();
+
             edm::Handle<GenEventInfoProduct> genInfo;
             iEvent.getByToken(genTag_, genInfo);
-
-            if (!genInfo.isValid()) {
-                edm::LogError("GenWeightProducer") << "Failed to get GenEventInfoProduct";
-                return;
-            }
-
             double weight = genInfo->weight();
-
-            auto& counter = streamCache(id)->countermap[""];
-            counter.incGenOnly(weight);
 
             auto out = std::make_unique<nanoaod::FlatTable>(1, "genWeight", true);
             out->setDoc("generator weight");
             out->addColumnValue<float>("", weight, "generator weight", nanoaod::FlatTable::FloatColumn);
+            
+            std::string model_label = streamCache(id)->getLabel();
+            auto outM = std::make_unique<std::string>((!model_label.empty()) ? std::string("GenModel_") + model_label : "");
+            iEvent.put(std::move(outM), "genModel");
+            
+            counter->incGenOnly(weight);
+            
             iEvent.put(std::move(out));
-        }
-
-        // Clear the counter map at the beginning of each run
-        void streamBeginRun(edm::StreamID id, edm::Run const& run, edm::EventSetup const&) const override {
-            streamCache(id)->clear();
-        }
-
-        // Initialize an empty counter map for the global run
-        std::shared_ptr<CounterMap> globalBeginRunSummary(edm::Run const& run, edm::EventSetup const&) const override {
-            return std::make_shared<CounterMap>();
         }
 
         // Merge the stream counter map into the global counter map
@@ -78,15 +95,15 @@ class GenWeightProducer : public edm::global::EDProducer<edm::StreamCache<Counte
             edm::StreamID id,
             edm::Run const& run,
             edm::EventSetup const&,
-            CounterMap* runCounterMap
+            counters::CounterMap* runCounterMap
         ) const override {
             runCounterMap->merge(*streamCache(id));
         }
 
-        void globalEndRunSummary(edm::Run const& run, edm::EventSetup const&, CounterMap* runCounterMap) const override {}
+        void globalEndRunSummary(edm::Run const& run, edm::EventSetup const&, counters::CounterMap* runCounterMap) const override {}
 
         // Produce the sum of weights in the global run
-        void globalEndRunProduce(edm::Run& iRun, edm::EventSetup const&, CounterMap const* runCounterMap) const override {
+        void globalEndRunProduce(edm::Run& iRun, edm::EventSetup const&, counters::CounterMap const* runCounterMap) const override {
             auto out = std::make_unique<nanoaod::MergeableCounterTable>();
 
             for (const auto& x : runCounterMap->countermap) {
@@ -103,14 +120,17 @@ class GenWeightProducer : public edm::global::EDProducer<edm::StreamCache<Counte
 
         static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
             edm::ParameterSetDescription desc;
-            desc.add<edm::InputTag>("genEventInfo", edm::InputTag("generator"))
+            desc.add<edm::InputTag>("genEvent", edm::InputTag("generator"))
                 ->setComment("tag for the GenEventInfoProduct, to get the main weight");
-            descriptions.add("genWeightsTable", desc);
+            desc.add<edm::InputTag>("genLumiInfoHeader", edm::InputTag("generator"))
+                ->setComment("tag for the GenLumiInfoProduct, to get the model string");
+            descriptions.add("genWeights", desc);
         }
 
     protected:
         const edm::EDGetTokenT<GenEventInfoProduct> genTag_;
+        const edm::EDGetTokenT<GenLumiInfoHeader> genLumiInfoHeadTag_;
 };
 
 #include "FWCore/Framework/interface/MakerMacros.h"
-DEFINE_FWK_MODULE(GenWeightProducer);
+DEFINE_FWK_MODULE(GenWeightsTablePreSkimProducer);
