@@ -8,7 +8,6 @@ import argparse
 import os
 import time
 import sys
-import shutil
 
 
 def eos_ls(args, directory):
@@ -157,19 +156,19 @@ def get_args():
     return parser.parse_args()
 
 
-def create_condor_script(args, dataset_dir, files, max_size, cmssw_version):
+def create_condor_script(args, dataset_dir, files, max_size, work_dir, cmssw_version):
     """Create a condor submission script and executable for this dataset"""
     dataset_name = os.path.basename(dataset_dir)
 
-    work_dir = "condor/condor_{}".format(dataset_name)
-    if not os.path.exists(work_dir):
-        os.makedirs(work_dir)
+    work_dir_dataset = "{}/condor_{}".format(work_dir, dataset_name)
+    if not os.path.exists(work_dir_dataset):
+        os.makedirs(work_dir_dataset)
 
     # Write the split file lists
-    n_jobs = split_files_for_jobs(files, max_size, args, work_dir)
+    n_jobs = split_files_for_jobs(files, max_size, args, work_dir_dataset)
 
     # Write merge script
-    merge_script = os.path.join(work_dir, "merge.sh")
+    merge_script = os.path.join(work_dir_dataset, "merge.sh")
     with open(merge_script, "w") as f:
         f.write(
             """#!/bin/bash
@@ -196,6 +195,18 @@ fi
 mv ../files_$1.txt ../haddnano.py {cmssw_version}/src
 cd {cmssw_version}/src
 eval $(scramv1 runtime -sh) # cmsenv is an alias not on the workers
+
+# If there is only one file, just copy it
+if [ $(wc -l < files_$1.txt) -eq 1 ]; then
+    xrdcp -f $(cat files_$1.txt) {redirector}{output_dir}/merged_$1.root
+    if [ $? -ne 0 ]; then
+        echo "Copy to EOS failed!"
+        exit 1
+    fi
+    echo "Cleaning up"
+    echo "Job completed successfully"
+    exit 0
+fi
 
 # Do the merge
 python haddnano.py merged_$1.root $(cat files_$1.txt)
@@ -228,19 +239,19 @@ echo "Job completed successfully"
     cmssw_tarball = "{}.tar.gz".format(cmssw_version)
 
     # Create the condor submit file
-    submit_file = os.path.join(work_dir, "submit.jdl")
+    submit_file = os.path.join(work_dir_dataset, "submit.jdl")
     with open(submit_file, "w") as f:
         f.write(
             """# Condor submit file for merging files
 universe = vanilla
 executable = {executable}
 arguments = $(ProcId)
-output = {work_dir}/$(ClusterId).$(ProcId).stdout
-error = {work_dir}/$(ClusterId).$(ProcId).stderr
-log = {work_dir}/$(ClusterId).$(ProcId).log
+output = {work_dir_dataset}/$(ClusterId).$(ProcId).stdout
+error = {work_dir_dataset}/$(ClusterId).$(ProcId).stderr
+log = {work_dir_dataset}/$(ClusterId).$(ProcId).log
 
 # Transfer files
-transfer_input_files = {work_dir}/files_$(ProcId).txt,haddnano.py,{cmssw_tarball}
+transfer_input_files = {work_dir_dataset}/files_$(ProcId).txt,haddnano.py,{cmssw_tarball}
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 
@@ -276,7 +287,7 @@ periodic_hold_reason = strcat("Job held by PERIODIC_HOLD due to ", \\
 queue {n_jobs}
 """.format(
                 executable=merge_script,
-                work_dir=work_dir,
+                work_dir_dataset=work_dir_dataset,
                 n_jobs=n_jobs,
                 cmssw_tarball=cmssw_tarball,
             )
@@ -285,7 +296,7 @@ queue {n_jobs}
     return submit_file
 
 
-def split_files_for_jobs(files, max_size, args, work_dir):
+def split_files_for_jobs(files, max_size, args, work_dir_job):
     """Split files into groups based on size"""
     groups = []
     current_group = []
@@ -305,7 +316,7 @@ def split_files_for_jobs(files, max_size, args, work_dir):
 
     # Write each group to a separate file
     for i, group in enumerate(groups):
-        output_file = os.path.join(work_dir, "files_{}.txt".format(i))
+        output_file = os.path.join(work_dir_job, "files_{}.txt".format(i))
         with open(output_file, "w") as f:
             for file_path in group:
                 f.write(args.redirector + file_path + "\n")
@@ -366,9 +377,8 @@ if __name__ == "__main__":
     submit_files = []
 
     # Create a working directory for condor files
-    if os.path.exists("condor"):
-        shutil.rmtree("condor")
-    os.makedirs("condor")
+    work_dir = "condor_merge_{}".format(time.strftime("%Y%m%d-%H%M%S"))
+    os.makedirs(work_dir)
 
     for dataset_dir in sorted(dataset_files.keys()):
         print("  {} ({} files)".format(dataset_dir, len(dataset_files[dataset_dir])))
@@ -379,19 +389,23 @@ if __name__ == "__main__":
             dataset_dir,
             dataset_files[dataset_dir],
             args.max_size * 1000**3,
+            work_dir,
             cmssw_version,
         )
         submit_files.append(submit_file)
 
     # Create a master submit script
-    with open("condor/submit_all.sh", "w") as f:
+    submit_script = os.path.join(work_dir, "submit_all.sh")
+    with open(submit_script, "w") as f:
         f.write("#!/bin/bash\n")
         for submit_file in submit_files:
             f.write("condor_submit {}\n".format(submit_file))
-    os.chmod("condor/submit_all.sh", 0o755)
+    os.chmod(submit_script, 0o755)
 
     print("\nCreated condor submission files.")
-    print("To submit all jobs, run: ./condor/submit_all.sh")
+    print("To submit all jobs, run: ./{}".format(submit_script))
     print(
-        "Or submit individual datasets with: condor_submit condor/condor_*/submit.cmd"
+        "Or submit individual datasets with: condor_submit {}/condor_*/submit.cmd".format(
+            work_dir
+        )
     )

@@ -248,7 +248,7 @@ if __name__ == "__main__":
     print("Found {} jobs to resubmit:".format(len(input_files)))
 
     # Create a working directory for condor files
-    work_dir = "condor_{}".format(time.strftime("%Y%m%d-%H%M%S"))
+    work_dir = "condor_resubmit_{}".format(time.strftime("%Y%m%d-%H%M%S"))
     os.makedirs(work_dir)
 
     submit_files = []
