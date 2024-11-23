@@ -31,7 +31,7 @@ params.register(
 
 params.register(
     "cpu",
-    1,
+    8,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.int,
     "number of threads to use",
@@ -94,12 +94,14 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 
 process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(params.maxEvents))
 
+# outputFile = params.outputFile
+# override input parameter
+outputFile = "nano_skim.root"
+
 # Input source
 process.source = cms.Source(
     "PoolSource",
-    fileNames=cms.untracked.vstring(
-        "/store/data/Run2018A/DoubleMuon/MINIAOD/UL2018_MiniAODv2_GT36-v1/2430000/00267D27-22E1-C143-A50C-5FC81AE13C86.root"
-    ),
+    fileNames=cms.untracked.vstring("file:file.root"),
     secondaryFileNames=cms.untracked.vstring(),
     skipBadFiles=cms.untracked.bool(True),
 )
@@ -125,7 +127,7 @@ if params.isMC:
             dataTier=cms.untracked.string("NANOAODSIM"),
             filterName=cms.untracked.string(""),
         ),
-        fileName=cms.untracked.string("nano_skim_data.root"),
+        fileName=cms.untracked.string(outputFile),
         outputCommands=(process.NANOAODSIMEventContent.outputCommands),
         fakeNameForCrab=cms.untracked.bool(params.isCRAB),
         SelectEvents=cms.untracked.PSet(SelectEvents=cms.vstring("skim_step")),
@@ -139,7 +141,7 @@ else:
             dataTier=cms.untracked.string("NANOAOD"),
             filterName=cms.untracked.string(""),
         ),
-        fileName=cms.untracked.string("nano_skim_data.root"),
+        fileName=cms.untracked.string(outputFile),
         outputCommands=(process.NANOAODEventContent.outputCommands),
         fakeNameForCrab=cms.untracked.bool(params.isCRAB),
         SelectEvents=cms.untracked.PSet(SelectEvents=cms.vstring("skim_step")),
@@ -170,8 +172,8 @@ else:
 # Keep track of the gen weights
 if params.isMC:
     process.genWeightSum = cms.EDProducer(
-        "GenWeightProducer",
-        genEventInfo=cms.InputTag("generator"),
+        "GenWeightsTablePreSkimProducer",
+        genEvent=cms.InputTag("generator"),
     )
     process.genweight_step = cms.Path(process.genWeightSum)
     process.NANOAODSIMoutput.outputCommands.extend(

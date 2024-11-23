@@ -48,8 +48,7 @@ params.register(
 
 # Parse command line arguments
 params.parseArguments()
-if params.verbose:
-    print(params)
+print(params)
 
 # Define the process
 if params.era == "2016apv":
@@ -83,6 +82,15 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(params.maxEvents))
 
 # Input source
+if params.inputFiles[0].endswith(".txt"):
+    print("Reading input files from %s" % params.inputFiles[0])
+    with open(params.inputFiles[0].replace("file:", "")) as f:
+        input_files = f.readlines()
+        input_files = [x.strip() for x in input_files]
+    print("Found %d input files" % len(input_files))
+    del params.inputFiles[0]
+    params.inputFiles = input_files
+    print(params.inputFiles)
 process.source = cms.Source(
     "PoolSource",
     fileNames=cms.untracked.vstring(params.inputFiles),

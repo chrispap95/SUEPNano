@@ -43,7 +43,7 @@ def make_config(args, dataset):
     config_.JobType.maxMemoryMB = 3000
     config_.JobType.pyCfgParams = running_options
     config_.JobType.allowUndistributedCMSSW = True
-    config_.JobType.maxJobRuntimeMin = 400
+    config_.JobType.maxJobRuntimeMin = 1000
 
     config_.Data.inputDBS = "global"
     config_.Data.splitting = "FileBased"
@@ -83,7 +83,7 @@ def get_args():
         "--output",
         type=str,
         help="Output location",
-        default="/store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024",
+        default="/store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024",
     )
     parser.add_argument(
         "--nosubmit",
