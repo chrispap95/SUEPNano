@@ -2,7 +2,7 @@
 *.pyc
 crab_*/
 crab.log
-condor/
+condor*/
 docker_stderror
 *.log
 *.root
