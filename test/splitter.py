@@ -274,7 +274,7 @@ when_to_transfer_output = ON_EXIT
 
 # Requirements and resources
 x509userproxy = $ENV(X509_USER_PROXY)
-request_memory = 4500
+request_memory = {memory}
 +REQUIRED_OS = "rhel7"
 +DesiredOS = REQUIRED_OS
 
@@ -308,6 +308,7 @@ queue {n_jobs}
                 n_jobs=n_jobs,
                 cmssw_tarball=cmssw_tarball,
                 dataset_name=dataset_name,
+                memory=args.memory,
             )
         )
 
