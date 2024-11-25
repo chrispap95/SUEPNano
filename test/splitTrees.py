@@ -1,108 +1,212 @@
-#!/usr/bin/env python
-import ROOT
 import os
+import argparse
+from multiprocessing import Pool
+from contextlib import closing
+import subprocess
+import glob
+
+from tqdm import tqdm  # type: ignore [import]
+import ROOT  # type: ignore [import]
+
+
+def get_args():
+    parser = argparse.ArgumentParser(usage="%prog [options]")
+    parser.add_argument(
+        "-i",
+        "--input",
+        type=str,
+        required=True,
+        help="Accepts either: 1) a path to a single input root file, "
+        "2) text file containting a list of paths to root files, or "
+        "3) directory containign root files to be split.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        required=True,
+        help="Destination for the final output files. E.g., ",
+    )
+    parser.add_argument(
+        "--hadd",
+        action="store_true",
+        default=False,
+        help="If activated, run hadd over split chunks to get merged .root files.",
+    )
+    parser.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
+        default=1,
+        help="How many cores to take (default = 1, sequential running).",
+    )
+    parser.add_argument(
+        "-D",
+        "--drop",
+        default=["GenModel_*"],
+        action="append",
+        help="Branches to drop. Default is to drop the 'GenModel' ones.",
+    )
+    parser.add_argument(
+        "-K",
+        "--keep",
+        default=[],
+        action="append",
+        help="Branches to keep. Default is all.",
+    )
+    return parser.parse_args()
+
+
+class RootFileManager(object):
+    """Context manager for ROOT files in Python 2"""
+
+    def __init__(self, filename, mode="read"):
+        self.filename = filename
+        self.mode = mode
+        self.root_file = None
+
+    def __enter__(self):
+        self.root_file = ROOT.TFile.Open(self.filename, self.mode)
+        if not self.root_file or self.root_file.IsZombie():
+            raise RuntimeError("Failed to open file: %s" % self.filename)
+        return self.root_file
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.root_file:
+            self.root_file.Close()
+
+
+def get_input_files(input):
+    input_files = []
+    if input.endswith(".root"):
+        input_files = [input]
+    elif os.path.isfile(input):
+        with open(input, "r") as f:
+            input_files = [x.strip() for x in f.readlines()]
+    else:
+        input_files = glob.glob("{}/*.root".format(input))
+    return input_files
+
 
 def splitfile(inputs):
-    fname, options = inputs[0], inputs[1]
-    allpoints={}
+    fname, options = inputs
+    all_scan_points = {}
     if not os.path.exists(options.output):
-      os.system("mkdir -p "+options.output)
-    f = ROOT.TFile.Open(fname,'read')
-    t = f.Events
-    print('Total events in %s: %d'%(fname,t.GetEntries()))
+        os.system("mkdir -p " + options.output)
 
-    # First we keep nothing
-    t.SetBranchStatus('*',0) # Speed up by only using useful branches
-    # split using GenModel information
-    t.SetBranchStatus('GenModel*',1) # Speed up by only using useful branches
-    list_branches = [key.GetName() for key in t.GetListOfBranches()]
-    for l in list_branches:
-      if "GenModel" in l:
-        name = l.replace("GenModel_","")
-        allpoints[name] = ROOT.TEventList(name, name)
+    # Open the file and get the tree
+    with RootFileManager(fname) as f_in:
+        tree = f_in.Events
+        n_events = tree.GetEntries()
+        print("Total events in %s: %d" % (fname, n_events))
 
-    # Now we fill up the TEventList
-    for nev in xrange(t.GetEntries()):
-      if nev%10000==1: print('Gen-Scanning event %d/%d'%(nev, t.GetEntries()))
-      t.GetEntry(nev)
-      for key in allpoints.keys():
-        if getattr(t, "GenModel_"+key):
-          allpoints[key].Enter(nev)
+        # Speed up by only using useful branches
+        tree.SetBranchStatus("*", 0)
+        tree.SetBranchStatus("GenModel*", 1)
 
-    for m in sorted(allpoints.keys()): 
-      print('-------%s: %d events'%(m,allpoints[m].GetN()))
+        # Get the list of scan points
+        list_branches = [key.GetName() for key in tree.GetListOfBranches()]
+        for branch in list_branches:
+            if "GenModel" in branch:
+                name = branch.replace("GenModel_", "")
+                all_scan_points[name] = ROOT.TEventList(name, name)
 
-    # Now we reactivate all branches so we save the whole tree!
-    t.SetBranchStatus("*",1)
-    for drop in options.drop: t.SetBranchStatus(drop,0) # Except thos we don't want
-    for keep in options.keep: t.SetBranchStatus(keep,1) # Just in case we want to do some regexp with the previous step
+        # Now we fill up the TEventList
+        for n_event in tqdm(xrange(n_events)):  # type: ignore [name-defined]
+            tree.GetEntry(n_event)
+            for key in all_scan_points.keys():
+                if getattr(tree, "GenModel_" + key):
+                    all_scan_points[key].Enter(n_event)
 
-    # The actual saving
-    for m,elist in allpoints.iteritems():
-      output = options.output + "/" + fname.split("/")[-1].replace(".root", "_" + m + ".root")
-      if os.path.exists(output): raise RuntimeError, 'Output file already exists'
-      fout = ROOT.TFile(output,'recreate')
-      fout.cd()
-      t.SetEventList(elist)
-      out = t.CopyTree('1')
-      fout.WriteTObject(out,'Events')
-      fout.Close()
-    return allpoints.keys()
+        print("Scan points found:")
+        for scan_point in sorted(all_scan_points):
+            print("\t%s: %d events" % (scan_point, all_scan_points[scan_point].GetN()))
 
-def haddfiles(inputs):
-    outdir = inputs[0]
-    name   = inputs[1]
-    os.system("python haddnano.py %s/%s_merged.root %s/*%s*root"%(outdir, name,outdir, name))
+        # Now we reactivate all branches so we save the whole tree!
+        tree.SetBranchStatus("*", 1)
+        for drop in options.drop:
+            tree.SetBranchStatus(drop, 0)
+        for keep in options.keep:
+            tree.SetBranchStatus(keep, 1)
+
+        # The actual saving
+        print("Saving the split files")
+        for scan_point, event_list in tqdm(
+            all_scan_points.iteritems(), total=len(all_scan_points)
+        ):
+            output = os.path.join(
+                options.output,
+                os.path.basename(fname).replace(".root", "_%s.root" % scan_point),
+            )
+            if os.path.exists(output):
+                raise RuntimeError("Output file already exists")
+
+            with RootFileManager(output, "recreate") as f_out:
+                tree.SetEventList(event_list)
+                out = tree.CopyTree("1")
+                f_out.WriteTObject(out, "Events")
+                f_out.Write()
+
+    return all_scan_points.keys()
+
+
+def split_files_parallel(args):
+    all_scan_points = []
+
+    if args.jobs == 1:
+        all_scan_points = [point for f in input_files for point in splitfile([f, args])]
+    else:
+        with closing(Pool(args.jobs)) as pool:
+            chunk_size = max(1, len(input_files) // (args.jobs * 4))
+            inputs = [(f, args) for f in input_files]
+            result = pool.map_async(splitfile, inputs, chunk_size)
+            result.wait()
+
+            for sublist in result.get():
+                all_scan_points.extend(sublist)
+
+    return list(set(all_scan_points))
+
+
+def hadd_files(outdir, name):
+    cmd = [
+        "python",
+        "haddnano.py",
+        os.path.join(outdir, "%s_merged.root" % name),
+        os.path.join(outdir, "*%s*root" % name),
+    ]
+    print("Merging: %s" % name)
+    process = subprocess.Popen(
+        " ".join(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    stdout, stderr = process.communicate()
+    return
+
+
+def merge_files_parallel(args):
+    if not args.hadd:
+        return
+    if args.jobs == 1:
+        for p in all_scan_points:
+            hadd_files(args.output, p)
+        return
+
+    with closing(Pool(args.jobs)) as pool:
+        inputs = [(args.output, point) for point in all_scan_points]
+        result = pool.map_async(hadd_files, inputs)
+        result.wait()
+
 
 if __name__ == "__main__":
-    from optparse import OptionParser
-    parser = OptionParser(usage="%prog [options] outputDir inputDirs")
-    parser.add_option("-D", "--drop",  dest="drop", type="string", default=["GenModel_*"], action="append",  help="Branches to drop, as per TTree::SetBranchStatus. Default is to just drop the 'GenModel' ones.") 
-    parser.add_option("-K", "--keep",  dest="keep", type="string", default=[], action="append",  help="Branches to keep, as per TTree::SetBranchStatus. Default is all, but can we used to reactive after kdrop.") 
-    parser.add_option("--input", dest="input", type="string" , default=None, help="Input folder containing the .root files needed for the splitting")
-    parser.add_option("--output"  , dest="output", type="string", default=None, help="Output folder containing the .root files after the splitting")
-    parser.add_option("--jobs"  , dest="jobs", type="int", default=1, help="How many cores to take (default = 1, sequential running).")
-    parser.add_option("--hadd"  , dest="hadd", action="store_true", default=False, help="If activated, run hadd over split chunks to get merged .root files.")
+    args = get_args()
 
-    (options, args) = parser.parse_args()
-    
-    allInputFiles = []
-    for f in os.listdir(options.input):
-      if not("root" in f): continue
-      allInputFiles.append(options.input+ "/" + f)
-    print("Will write selected trees to "+options.output)
-    allpoints = []
-    if options.jobs == 1:
-      for f in allInputFiles:
-        allpoints += splitfile([f, options])
-    else:
-      allInputs = [[f,options] for f in allInputFiles]
-      from multiprocessing import Pool
-      from contextlib import closing
-      import time
-      with closing(Pool(options.jobs)) as p:
-        retlist1 = p.map_async(splitfile, allInputs, 1)
-        while not retlist1.ready():
-          time.sleep(0.001)
-        retlist1 = retlist1.get()
-        p.close()
-        p.join()
-        p.terminate()
-      for r in retlist1:
-        allpoints += r
-    allpoints = list(dict.fromkeys(allpoints))
-    if options.hadd:
-      print("Will now hadd the splitted chunks")
-      if options.jobs == 1:
-        for p in allpoints:
-          haddfiles([options.output, p])
-      else:
-        allInputs = [[options.output, p] for p in allpoints]
-        with closing(Pool(options.jobs)) as p:
-          retlist1 = p.map_async(haddfiles, allInputs, 1)
-          while not retlist1.ready():
-            time.sleep(0.001)
-          retlist1 = retlist1.get()
-          p.close()
-          p.join()
-          p.terminate()
+    # Get the list of input files
+    input_files = get_input_files(args.input)
+
+    # Splitting section
+    print("Splitting the following files: %s\n" % input_files)
+    all_scan_points = split_files_parallel(args)
+
+    # Merging section
+    print("All scan points: %s\n" % all_scan_points)
+    merge_files_parallel(args)
