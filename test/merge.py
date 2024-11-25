@@ -1,6 +1,5 @@
 """
 Run this script to merge files from different directories on EOS.
-Produce a JSON file with the merged files.
 """
 
 import subprocess
@@ -160,7 +159,7 @@ def create_condor_script(args, dataset_dir, files, max_size, work_dir, cmssw_ver
     """Create a condor submission script and executable for this dataset"""
     dataset_name = os.path.basename(dataset_dir)
 
-    work_dir_dataset = "{}/condor_{}".format(work_dir, dataset_name)
+    work_dir_dataset = os.path.join(work_dir, "condor_{}".format(dataset_name))
     if not os.path.exists(work_dir_dataset):
         os.makedirs(work_dir_dataset)
 
@@ -359,7 +358,6 @@ def create_cmssw_tarball():
 
 
 if __name__ == "__main__":
-    all_data = {}
     args = get_args()
 
     # Check for haddnano.py
@@ -374,12 +372,12 @@ if __name__ == "__main__":
     dataset_files = get_datasets_and_files(args)
 
     print("Found {} datasets to process:".format(len(dataset_files)))
-    submit_files = []
 
     # Create a working directory for condor files
     work_dir = "condor_merge_{}".format(time.strftime("%Y%m%d-%H%M%S"))
     os.makedirs(work_dir)
 
+    submit_files = []
     for dataset_dir in sorted(dataset_files.keys()):
         print("  {} ({} files)".format(dataset_dir, len(dataset_files[dataset_dir])))
 
@@ -405,7 +403,7 @@ if __name__ == "__main__":
     print("\nCreated condor submission files.")
     print("To submit all jobs, run: ./{}".format(submit_script))
     print(
-        "Or submit individual datasets with: condor_submit {}/condor_*/submit.cmd".format(
+        "Or submit individual datasets with: condor_submit {}/condor_*/submit.jdl".format(
             work_dir
         )
     )
