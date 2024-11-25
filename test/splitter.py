@@ -402,7 +402,7 @@ if __name__ == "__main__":
     print("Found {} datasets to process:".format(len(dataset_files)))
 
     # Create a working directory for condor files
-    work_dir = "condor_merge_{}".format(time.strftime("%Y%m%d-%H%M%S"))
+    work_dir = "condor_split_{}".format(time.strftime("%Y%m%d-%H%M%S"))
     os.makedirs(work_dir)
 
     submit_files = []
