@@ -7,6 +7,7 @@ import argparse
 import os
 import time
 import sys
+import json
 
 
 def eos_ls(args, directory):
@@ -122,7 +123,8 @@ def get_args():
         "-d",
         "--datasets",
         type=str,
-        help="Text file with list of datasets to process",
+        help="Text file or JSON file with list of datasets to process. "
+        "If JSON, use --json flag and the code will keep only the primary part of the dataset name.",
         required=True,
     )
     parser.add_argument(
@@ -159,6 +161,12 @@ def get_args():
         "--verbose",
         action="store_true",
         help="Print detailed progress information",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Use JSON file format for datasets. The code will keep only the primary part "
+        "of the dataset name if the provide datasets follow the DAS naming conventions.",
     )
     return parser.parse_args()
 
@@ -380,8 +388,12 @@ if __name__ == "__main__":
     cmssw_tarball, cmssw_version = create_cmssw_tarball()
 
     list_of_datasets = []
-    with open(args.datasets, "r") as f:
-        list_of_datasets = [x.strip() for x in f.readlines()]
+    if args.json:
+        with open(args.datasets, "r") as f:
+            list_of_datasets = [x.split("/")[1] for x in json.load(f)]
+    else:
+        with open(args.datasets, "r") as f:
+            list_of_datasets = [x.strip() for x in f.readlines()]
 
     # Get all datasets and their files in one pass
     dataset_files = get_datasets_and_files(args.input, list_of_datasets)
