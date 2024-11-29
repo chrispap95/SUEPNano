@@ -213,13 +213,13 @@ export SCRAM_ARCH=slc7_amd64_gcc700
 if [ ! -d {cmssw_version}/src ]; then
     mkdir -p {cmssw_version}/src
 fi
-mv ../files_${{job_id}}.txt ../haddnano.py ../splitTrees.py {cmssw_version}/src
+mv ../files_${{job_id}}.txt ../haddnano.py ../split_trees.py {cmssw_version}/src
 cd {cmssw_version}/src
 eval $(scramv1 runtime -sh) # cmsenv is an alias not on the workers
 
 # Do the splitting
 mkdir output
-python splitTrees.py -i files_${{job_id}}.txt -o output --hadd
+python split_trees.py -i files_${{job_id}}.txt -o output --hadd
 
 # Check if merge was successful
 if [ $? -ne 0 ]; then
@@ -268,7 +268,7 @@ error = {work_dir_dataset}/$(ClusterId).$(ProcId).stderr
 log = {work_dir_dataset}/$(ClusterId).$(ProcId).log
 
 # Transfer files
-transfer_input_files = {work_dir_dataset}/files_$(ProcId).txt,splitTrees.py,haddnano.py,{cmssw_tarball}
+transfer_input_files = {work_dir_dataset}/files_$(ProcId).txt,split_trees.py,haddnano.py,{cmssw_tarball}
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 
@@ -380,9 +380,9 @@ def create_cmssw_tarball():
 if __name__ == "__main__":
     args = get_args()
 
-    # Check for splitTrees.py
-    if not os.path.exists("splitTrees.py"):
-        print("Please make sure splitTrees.py is in the current directory")
+    # Check for split_trees.py
+    if not os.path.exists("split_trees.py"):
+        print("Please make sure split_trees.py is in the current directory")
         sys.exit(1)
 
     # Create CMSSW tarball

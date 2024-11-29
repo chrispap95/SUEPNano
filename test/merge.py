@@ -7,6 +7,7 @@ import argparse
 import os
 import time
 import sys
+import json
 
 
 def eos_ls(args, directory):
@@ -47,9 +48,17 @@ def get_datasets_and_files(args):
     Get all datasets and their ROOT files in a single pass.
     Returns a dictionary {dataset_dir: [root_files]}
     """
+    # Get datasets to process if a JSON file is provided
+    if args.dataset:
+        print("Reading datasets from JSON file: {}".format(args.dataset))
+        with open(args.dataset) as f:
+            datasets = json.load(f)
+
     print("Scanning input directory: {}".format(args.input))
     dataset_files = {}
     top_contents = eos_ls(args, args.input)
+    if args.dataset:
+        top_contents = [x for x in top_contents for y in datasets if x in y]
     print("Found {} potential dataset directories".format(len(top_contents)))
 
     # Process each potential dataset directory
@@ -121,6 +130,12 @@ def get_args():
         description="Merge files from different directories recursively"
     )
     parser.add_argument(
+        "--dataset",
+        type=str,
+        help="Path to JSON file containing datasets to process. If not provided, all datasets in the input directory will be processed.",
+        default=None,
+    )
+    parser.add_argument(
         "--input",
         type=str,
         help="Input base directory",
@@ -144,7 +159,7 @@ def get_args():
     parser.add_argument(
         "--memory",
         type=int,
-        default=4000,
+        default=5000,
         help="Memory request for condor jobs in MB",
     )
     parser.add_argument(
@@ -256,7 +271,7 @@ when_to_transfer_output = ON_EXIT
 
 # Requirements and resources
 x509userproxy = $ENV(X509_USER_PROXY)
-request_memory = 4000
+request_memory = {memory}
 +REQUIRED_OS = "rhel7"
 +DesiredOS = REQUIRED_OS
 
@@ -289,6 +304,7 @@ queue {n_jobs}
                 work_dir_dataset=work_dir_dataset,
                 n_jobs=n_jobs,
                 cmssw_tarball=cmssw_tarball,
+                memory=args.memory,
             )
         )
 
