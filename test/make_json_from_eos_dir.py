@@ -54,4 +54,4 @@ if __name__ == "__main__":
 
     # Write the dictionary to a JSON file
     with open(args.output, "w") as f:
-        json.dump(file_dict, f, indent=4)
+        json.dump(file_dict, f, indent=4, sort_keys=True)
