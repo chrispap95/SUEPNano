@@ -76,14 +76,12 @@ def get_args():
         "--campaign",
         type=str,
         help="Name of the campaign for the CRAB area",
-        default="NANO_UL18",
     )
     parser.add_argument(
         "-o",
         "--output",
         type=str,
         help="Output location",
-        default="/store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024",
     )
     parser.add_argument(
         "--nosubmit",
@@ -93,7 +91,7 @@ def get_args():
     parser.add_argument(
         "--dryrun",
         action="store_true",
-        help="Dry run - will try to benchmark the jobs",
+        help="Dry run - will try to benchmark the jobs. Note: Does not work well for now. Do not use.",
     )
     parser.add_argument(
         "--validation",
@@ -111,6 +109,13 @@ def get_args():
 
 if __name__ == "__main__":
     args = get_args()
+
+    if args.campaign is None:
+        raise ValueError("Please provide a campaign name. Example: NANO_UL18")
+    if args.output is None:
+        raise ValueError(
+            "Please provide an output location. Example: /store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024"
+        )
 
     datasets = []
     with open(args.dataset, "r") as f:
