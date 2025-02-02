@@ -9,7 +9,8 @@ This is a [NanoAOD](https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookNanoA
 For UL data and MC **NanoAODv9** according to the [XPOG](https://gitlab.cern.ch/cms-nanoAOD/nanoaod-doc/-/wikis/Releases/NanoAODv9) and [PPD](https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmVAnalysisSummaryTable) recommendations:
 
 ```bash
-cmsrel  CMSSW_10_6_44 # or the newest 10_6_X release
+cmssw-el7 # needed for newer el9 interactive nodes
+cmsrel CMSSW_10_6_44 # or the newest 10_6_X release
 cd  CMSSW_10_6_44/src
 cmsenv
 git cms-addpkg PhysicsTools/NanoAOD
