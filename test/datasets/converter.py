@@ -2,7 +2,7 @@
 import json
 import shlex
 import subprocess
-from tqdm import tqdm
+from tqdm import tqdm  # type: ignore[import]
 
 if __name__ == "__main__":
     with open("2016APV/full_mc_2016APV.json") as json_file:
