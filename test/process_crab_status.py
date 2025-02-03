@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import print_function, division
-import pandas as pd
+import pandas as pd  # type: ignore[import]
 import json
 import glob
 import argparse
@@ -19,8 +19,7 @@ def get_args():
     parser.add_argument(
         "-o",
         "--output",
-        default="crab_monitor_history/incomplete_datasets.json",
-        help="Output JSON file name (default: crab_monitor_history/incomplete_datasets.json)",
+        help="Output JSON file name (default: crab_monitor_history/[input filename]_incomplete.json)",
     )
     return parser.parse_args()
 
@@ -47,15 +46,18 @@ def main():
         incomplete_datasets = [
             dataset
             for dataset, row in latest_status.iterrows()
-            if dataset and row["status"] != "COMPLETED"
+            if dataset and row["failed"] > 0
         ]
 
         # Write to JSON file
-        with open(args.output, "w") as f:
+        output_filename = args.output
+        if output_filename is None:
+            output_filename = args.input.replace(".csv", "_incomplete.json")
+        with open(output_filename, "w") as f:
             json.dump(incomplete_datasets, f, indent=2)
 
         print("Found {} incomplete datasets".format(len(incomplete_datasets)))
-        print("Results saved to: {}".format(args.output))
+        print("Results saved to: {}".format(output_filename))
 
     except Exception as e:
         print("Error: {}".format(str(e)), file=sys.stderr)

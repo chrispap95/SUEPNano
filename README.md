@@ -52,12 +52,12 @@ The following command will submit jobs to the CRAB to process the datasets in th
 python multicrab.py -d datasets.json -c NANO_UL18 -o /store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024
 ```
 
-You can look at the crab configs before submitting them by using the `--nosubnit` option. If you want to submit only one job for validation purposes, you can use the `--validation` option.
+You can look at the crab configs before submitting them by using the `--nosubnit` option. If you want to submit only one job for validation purposes, you can use the `--validation` option. These can be useful if you are submitting for the first time.
 
 The status can be checked with the CRAB grafana website, the usual crab commands or with the `crab_monitor.py` script:
 
 ```bash
-python crab_monitor.py -d filenames/QCD.json
+python crab_monitor.py -d filenames/2018/full_mc_2018.json --crab-dir crab_NANO_UL18
 ```
 
 This will create a summary table for the latest submissions for the datasets in the `QCD.json` file and it will save the status details in a file in the directory `crab_monitor_history`. If you want to focus on the submissions that are not finished, you can process this file with the `process_crab_status.py` script:
@@ -66,15 +66,15 @@ This will create a summary table for the latest submissions for the datasets in 
 python process_crab_status.py -i crab_monitor_history/filename.csv
 ```
 
-and create an `incomplete_datasets.json` file to use for further monitoring and resubmissions.
+and create an `filename_incomplete.json` file to use for further monitoring and resubmissions.
 
 To resubmit the failed jobs, you can try to resubmit all submissions by using `crab_resubmit_all.sh` or you can resubmit only selected datasets by using the `crab_resubmit.py` script:
 
 ```bash
-python crab_resubmit.py -d incomplete_datasets.json --maxmemory 4000 --maxjobruntime 500
+python crab_resubmit.py -d incomplete_datasets.json --crab-dir crab_NANO_UL17 --maxmemory 4000 --maxjobruntime 500
 ```
 
-This will resubmit the failed jobs for the datasets in the `incomplete_datasets.json` file with the specified memory and runtime limits.
+This will resubmit the failed jobs for the datasets in the `filename_incomplete.json` file with the specified memory and runtime limits.
 
 ## Merging the output
 

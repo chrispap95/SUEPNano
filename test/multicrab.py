@@ -5,9 +5,10 @@ Example usage:
 python multicrab.py -d datasets.json -c NANO_UL18 -o /store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024/
 """
 
+import argparse
 import json
 import time
-import argparse
+from tqdm import tqdm  # type: ignore[import]
 from multiprocessing import Process
 from CRABClient import UserUtilities
 from CRABAPI import RawCommand
@@ -21,9 +22,9 @@ def make_dataset_tag(dataset, long=False):
     return dataset.split("/")[1]
 
 
-def make_request_name(dataset):
+def make_request_name(dataset, long=False):
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    return make_dataset_tag(dataset) + "_" + timestamp
+    return make_dataset_tag(dataset, long=long) + "_" + timestamp
 
 
 def make_config(args, dataset):
@@ -121,7 +122,7 @@ if __name__ == "__main__":
     with open(args.dataset, "r") as f:
         datasets = json.load(f)
 
-    for dataset in datasets:
+    for dataset in tqdm(datasets, desc="Submitting CRAB jobs"):
         config = make_config(args, dataset)
         if args.nosubmit:
             print(config.pythonise_())

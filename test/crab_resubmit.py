@@ -23,6 +23,11 @@ def get_args():
         help="Base directory containing CRAB task directories (default: crab_NANO_UL18)",
     )
     parser.add_argument(
+        "--isdata",
+        action="store_true",
+        help="Flag to indicate data datasets (default: MC)",
+    )
+    parser.add_argument(
         "--maxmemory",
         type=int,
         default=4000,
@@ -37,8 +42,11 @@ def get_args():
     return parser.parse_args()
 
 
-def get_primary_name(dataset):
+def get_task_name(dataset, isdata=False):
     """Extract primary dataset name from full dataset path"""
+    # Split by '/' and take the first part (index 1, as dataset starts with '/')
+    if isdata:
+        return dataset.replace("/", "_")[1:]
     return dataset.split("/")[1]
 
 
@@ -79,8 +87,8 @@ def main():
             print("  Dataset: {}".format(dataset))
 
             # Find corresponding task directory
-            primary_name = get_primary_name(dataset)
-            task_dir = find_latest_task_dir(args.crab_dir, primary_name)
+            task_name = get_task_name(dataset, args.isdata)
+            task_dir = find_latest_task_dir(args.crab_dir, task_name)
 
             if not task_dir:
                 print("  ERROR: Could not find task directory for {}".format(dataset))

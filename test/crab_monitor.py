@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 from __future__ import division, print_function
-from CRABAPI.RawCommand import crabCommand
+from CRABAPI.RawCommand import crabCommand  # type: ignore[import]
 import argparse
 import json
 import glob
@@ -22,6 +22,17 @@ def get_args():
         help="JSON file with list of datasets to monitor",
     )
     parser.add_argument(
+        "--crab-dir",
+        type=str,
+        default="crab_NANO_UL18",
+        help="Base directory containing CRAB task directories (default: crab_NANO_UL18)",
+    )
+    parser.add_argument(
+        "--isdata",
+        action="store_true",
+        help="Flag to indicate data datasets (default: MC)",
+    )
+    parser.add_argument(
         "--refresh",
         type=int,
         default=900,
@@ -36,9 +47,11 @@ def get_args():
     return parser.parse_args()
 
 
-def get_primary_name(dataset):
+def get_task_name(dataset, isdata=False):
     """Extract primary dataset name from full dataset path"""
     # Split by '/' and take the first part (index 1, as dataset starts with '/')
+    if isdata:
+        return dataset.replace("/", "_")[1:]
     return dataset.split("/")[1]
 
 
@@ -56,7 +69,7 @@ def find_latest_task_dir(crab_base_dir, primary_name):
     return latest_dir
 
 
-def get_task_directories(json_file, crab_base_dir="crab_NANO_UL18"):
+def get_task_directories(json_file, crab_base_dir="crab_NANO_UL18", isdata=False):
     """
     Parse JSON file containing datasets and find corresponding task directories
 
@@ -86,8 +99,8 @@ def get_task_directories(json_file, crab_base_dir="crab_NANO_UL18"):
     sys.stdout.flush()
 
     for dataset in datasets:
-        primary_name = get_primary_name(dataset)
-        task_dir = find_latest_task_dir(crab_base_dir, primary_name)
+        task_name = get_task_name(dataset, isdata)
+        task_dir = find_latest_task_dir(crab_base_dir, task_name)
 
         if task_dir:
             task_dirs.append(task_dir)
@@ -341,7 +354,9 @@ def main():
     args = get_args()
 
     # Need to convert dataset names to CRAB task directories
-    task_dirs, task_to_dataset = get_task_directories(args.datasets)
+    task_dirs, task_to_dataset = get_task_directories(
+        args.datasets, args.crab_dir, args.isdata
+    )
 
     if not task_dirs:
         print("No task directories found. Exiting.")
