@@ -13,7 +13,7 @@ from multiprocessing import Process
 from CRABClient import UserUtilities
 from CRABAPI import RawCommand
 
-running_options = ["isCRAB=True"]
+running_options = ["isCRAB=True", "verbose=True"]
 
 
 def get_args():
