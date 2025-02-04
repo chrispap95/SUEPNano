@@ -90,7 +90,7 @@ def make_config(args, dataset):
     config_.JobType.pluginName = "Analysis"
     config_.JobType.psetName = "NANO_data_cfg.py" if args.isdata else "NANO_mc_cfg.py"
     config_.JobType.maxMemoryMB = 3000
-    config_.JobType.pyCfgParams = running_options + [f"era={args.era}"]
+    config_.JobType.pyCfgParams = running_options + ["era=" + args.era]
     config_.JobType.allowUndistributedCMSSW = True
     config_.JobType.maxJobRuntimeMin = 1200
 
