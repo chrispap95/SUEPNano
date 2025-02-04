@@ -16,57 +16,6 @@ from CRABAPI import RawCommand
 running_options = ["isCRAB=True"]
 
 
-def make_dataset_tag(dataset, long=False):
-    if long:
-        return dataset.replace("/", "_")[1:]
-    return dataset.split("/")[1]
-
-
-def make_request_name(dataset, long=False):
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
-    return make_dataset_tag(dataset, long=long) + "_" + timestamp
-
-
-def make_config(args, dataset):
-    config_ = UserUtilities.config()
-
-    config_.General.workArea = "crab_" + args.campaign
-    config_.General.transferOutputs = True
-    config_.General.transferLogs = True
-    config_.General.requestName = (
-        make_request_name(dataset, long=True)
-        if args.isdata
-        else make_request_name(dataset)
-    )
-
-    config_.JobType.pluginName = "Analysis"
-    config_.JobType.psetName = "NANO_data_cfg.py" if args.isdata else "NANO_mc_cfg.py"
-    config_.JobType.maxMemoryMB = 3000
-    config_.JobType.pyCfgParams = running_options
-    config_.JobType.allowUndistributedCMSSW = True
-    config_.JobType.maxJobRuntimeMin = 1000
-
-    config_.Data.inputDBS = "global"
-    config_.Data.splitting = "FileBased"
-    config_.Data.publication = False
-    config_.Data.unitsPerJob = 10
-    if args.validation:
-        config_.Data.unitsPerJob = 1
-        config_.Data.totalUnits = 1
-    config_.Data.outLFNDirBase = args.output
-    config_.Data.inputDataset = dataset
-    config_.Data.outputDatasetTag = make_dataset_tag(dataset)
-
-    config_.Site.storageSite = "T3_US_FNALLPC"
-
-    return config_
-
-
-def submit(config, args):
-    res = RawCommand.crabCommand("submit", config=config, dryrun=args.dryrun)
-    return
-
-
 def get_args():
     parser = argparse.ArgumentParser(description="Submit CRAB jobs")
     parser.add_argument(
@@ -77,6 +26,13 @@ def get_args():
         "--campaign",
         type=str,
         help="Name of the campaign for the CRAB area",
+    )
+    parser.add_argument(
+        "-e",
+        "--era",
+        type=str,
+        help="Era of the dataset (e.g. 2016APV, 2016, 2017, 2018)",
+        required=True,
     )
     parser.add_argument(
         "-o",
@@ -106,6 +62,57 @@ def get_args():
     )
     args = parser.parse_args()
     return args
+
+
+def make_dataset_tag(dataset, long=False):
+    if long:
+        return dataset.replace("/", "_")[1:]
+    return dataset.split("/")[1]
+
+
+def make_request_name(dataset, long=False):
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    return make_dataset_tag(dataset, long=long) + "_" + timestamp
+
+
+def make_config(args, dataset):
+    config_ = UserUtilities.config()
+
+    config_.General.workArea = "crab_" + args.campaign
+    config_.General.transferOutputs = True
+    config_.General.transferLogs = True
+    config_.General.requestName = (
+        make_request_name(dataset, long=True)
+        if args.isdata
+        else make_request_name(dataset)
+    )
+
+    config_.JobType.pluginName = "Analysis"
+    config_.JobType.psetName = "NANO_data_cfg.py" if args.isdata else "NANO_mc_cfg.py"
+    config_.JobType.maxMemoryMB = 3000
+    config_.JobType.pyCfgParams = running_options + [f"era={args.era}"]
+    config_.JobType.allowUndistributedCMSSW = True
+    config_.JobType.maxJobRuntimeMin = 1200
+
+    config_.Data.inputDBS = "global"
+    config_.Data.splitting = "FileBased"
+    config_.Data.publication = False
+    config_.Data.unitsPerJob = 10
+    if args.validation:
+        config_.Data.unitsPerJob = 1
+        config_.Data.totalUnits = 1
+    config_.Data.outLFNDirBase = args.output
+    config_.Data.inputDataset = dataset
+    config_.Data.outputDatasetTag = make_dataset_tag(dataset)
+
+    config_.Site.storageSite = "T3_US_FNALLPC"
+
+    return config_
+
+
+def submit(config, args):
+    res = RawCommand.crabCommand("submit", config=config, dryrun=args.dryrun)
+    return
 
 
 if __name__ == "__main__":
