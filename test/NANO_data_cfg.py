@@ -52,7 +52,7 @@ if params.verbose:
     print(params)
 
 # Define the process
-if params.era == "2016apv":
+if params.era == "2016APV":
     from Configuration.Eras.Era_Run2_2016_HIPM_cff import Run2_2016_HIPM as era
 elif params.era == "2016":
     from Configuration.Eras.Era_Run2_2016_cff import Run2_2016 as era
@@ -119,7 +119,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, "106X_dataRun2_v35", "")
 
 
 # HLT filter and skimmer
-if params.era == "2016apv" or params.era == "2016":
+if params.era == "2016APV" or params.era == "2016":
     process.load("PhysicsTools.SUEPNano.hlt_skim_2016_cff")
 elif params.era == "2017":
     process.load("PhysicsTools.SUEPNano.hlt_skim_2017_cff")
