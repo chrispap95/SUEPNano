@@ -23,6 +23,8 @@ cd PhysicsTools/SUEPNano/test
 
 *Note:* This configuration has been tested for this combination of CMSSW release, global tag, era and dataset. When running over a new dataset you should check with [the nanoAOD workbook twiki](https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookNanoAOD#Running_on_various_datasets_from) to see if the era modifiers in the CRAB configuration files are correct. The jet correction versions are taken from the global tag.
 
+*Note:* sometimes (on lxplus especially) you might have to execute `source /cvmfs/cms.cern.ch/common/crab-setup.sh` before running the `crab` commands.
+
 ## Skimming
 
 The samples processed with the scripts in this reposiotry are skimmed to include only the events that pass the desired HLT path:

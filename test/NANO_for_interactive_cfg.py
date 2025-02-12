@@ -56,8 +56,7 @@ params.register(
 
 # Parse command line arguments
 params.parseArguments()
-if params.verbose:
-    print(params)
+print(params)
 
 # Define the process
 if params.era == "2016APV":
@@ -96,12 +95,21 @@ process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(params.maxEvent
 
 # outputFile = params.outputFile
 # override input parameter
-outputFile = "nano_skim.root"
+outputFile = "nano_skim_29.root"
 
 # Input source
 process.source = cms.Source(
     "PoolSource",
-    fileNames=cms.untracked.vstring("file:file.root"),
+    fileNames=cms.untracked.vstring(
+        "/store/mc/RunIISummer20UL16MiniAODAPVv2/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v2/50000/730023E6-3B18-D847-9AE9-C0FC39C32713.root",
+        "/store/mc/RunIISummer20UL16MiniAODAPVv2/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v2/50000/A1C52C76-F6DA-D043-8315-DD3729C5EE66.root",
+        "/store/mc/RunIISummer20UL16MiniAODAPVv2/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v2/50000/A3EA9717-7CA6-4344-B622-6EE2643F2BC8.root",
+        # "/store/mc/RunIISummer20UL16MiniAODAPVv2/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v2/50000/C4952EA8-62B6-6447-BC75-EFF12B3B53FB.root",
+        "/store/mc/RunIISummer20UL16MiniAODAPVv2/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v2/50000/C900FBC8-1AB8-5F4B-A420-9E18F37993F9.root",
+        "/store/mc/RunIISummer20UL16MiniAODAPVv2/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v2/50000/D56F3C38-B72A-DD4D-8E20-A241AFB9FC45.root",
+        "/store/mc/RunIISummer20UL16MiniAODAPVv2/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v2/50000/DECE3B2F-7EC3-384F-99A0-F4425EDA8FEA.root",
+        "/store/mc/RunIISummer20UL16MiniAODAPVv2/DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_preVFP_v11-v2/50000/F913B2A2-4B32-7E4F-8C2A-071A500148E0.root",
+    ),
     secondaryFileNames=cms.untracked.vstring(),
     skipBadFiles=cms.untracked.bool(True),
 )

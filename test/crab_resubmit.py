@@ -36,8 +36,8 @@ def get_args():
     parser.add_argument(
         "--maxjobruntime",
         type=int,
-        default=480,
-        help="Maximum runtime in minutes (e.g., 480 for 6 hours)",
+        default=1500,
+        help="Maximum runtime in minutes (e.g., 1500 for 25 hours)",
     )
     return parser.parse_args()
 
