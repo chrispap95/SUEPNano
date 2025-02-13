@@ -106,7 +106,7 @@ def make_config(args, dataset):
     config_.Data.inputDataset = dataset
     config_.Data.outputDatasetTag = make_dataset_tag(dataset, long=args.isdata)
     if args.process_partial:
-        config.Data.partialDataset = True
+        config_.Data.partialDataset = True
 
     config_.Site.storageSite = "T3_US_FNALLPC"
 
