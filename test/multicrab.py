@@ -60,6 +60,11 @@ def get_args():
         action="store_true",
         help="To be set if the dataset is data",
     )
+    parser.add_argument(
+        "--process-partial",
+        action="store_true",
+        help="Process only the part of the dataset that is on disk",
+    )
     args = parser.parse_args()
     return args
 
@@ -100,6 +105,8 @@ def make_config(args, dataset):
     config_.Data.outLFNDirBase = args.output
     config_.Data.inputDataset = dataset
     config_.Data.outputDatasetTag = make_dataset_tag(dataset, long=args.isdata)
+    if args.process_partial:
+        config.Data.partialDataset = True
 
     config_.Site.storageSite = "T3_US_FNALLPC"
 
