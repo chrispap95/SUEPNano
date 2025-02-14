@@ -136,7 +136,7 @@ if "__main__" in __name__:
                         other_obj,
                         br,
                         obj.GetListOfBranches().FindObject(br),
-                        allowNonBool=True,
+                        allow_non_bool=True,
                     )
                 for br in additional_branches:
                     # fill main
@@ -145,7 +145,7 @@ if "__main__" in __name__:
                         obj,
                         br,
                         other_obj.GetListOfBranches().FindObject(br),
-                        allowNonBool=True,
+                        allow_non_bool=True,
                     )
             # merge immediately
             obj.Merge(inputs, "fast" if go_fast else "")
