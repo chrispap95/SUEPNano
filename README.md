@@ -78,23 +78,6 @@ python crab_resubmit.py -d incomplete_datasets.json --crab-dir crab_NANO_UL17 --
 
 This will resubmit the failed jobs for the datasets in the `filename_incomplete.json` file with the specified memory and runtime limits.
 
-## Merging the output
-
-The output root files can be merged with the `haddnano.py` script:
-
-```bash
-python haddnano.py merged.root input_files/*.root
-```
-
-You can submit condor jobs for merging with the `merge.py` script:
-
-```bash
-python merge.py -d /store/group/lpcsuep/Muon_counting_search/SUEPNano_Nov2024
-./condor_merge_<timestamp>/submit_all.sh
-```
-
-You should check the options of the script with `python merge.py --help` before running it.
-
 ## For Centrally produced SUEP samples with multiple points in the scan
 
 `split_trees.py` can be used to split a set of input nanoAOD samples based on the correponding gen-level setup and -optionally- merge the resulting chunks together (i.e. same signal point coming from different nanosuep files). Usage is:
@@ -106,6 +89,41 @@ python split_trees.py --input [input directory] --output [output directory] --ha
 To submit condor jobs for splitting, you can use the `splitter.py` script:
 
 ```bash
-python splitter.py -d signal_datasets.json
+python splitter.py -d datasets/2018/GluGluToSUEP_2018.json --json --input /store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024 --output /store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024
 ./condor_split_<timestamp>/submit_all.sh
+```
+
+## Merging the output
+
+The output root files can be merged with the `haddnano.py` script:
+
+```bash
+python haddnano.py merged.root input_files/*.root
+```
+
+You can submit condor jobs for merging with the `merge.py` script:
+
+```bash
+python merge.py --dataset datasets/2017/GluGluToSUEP_2017.json --input /store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024
+./condor_merge_<timestamp>/submit_all.sh
+```
+
+You should check the options of the script with `python merge.py --help` before running it.
+
+**Note:** you can skip the `--dataset` option if you want to scan all files in the input directory. This is useful for processing the data datasets:
+
+```bash
+python merge.py --input /store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024/DoubleMuon --output /store/group/lpcsuep/Muon_counting_search/SUEPNano_UL16_Nov2024_merged/
+```
+
+Similarly, to process the split signal samples, you can do something like this:
+
+```bash
+for era in 16 16APV 17 18; do
+    for suep in $(eosls /store/user/lpcsuep/Muon_counting_search/SUEPNano_UL${era}_Nov2024/ | grep "SUEP.*split"); do
+        basepath=/store/user/lpcsuep/Muon_counting_search
+        python merge.py --input ${basepath}/SUEPNano_UL${era}_Nov2024/$suep --output ${basepath}/SUEPNano_UL${era}_Nov2024_merged/$suep
+        ./$(ls -td -- condor_merge* | head -n 1)/submit_all.sh
+    done
+done
 ```
