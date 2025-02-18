@@ -130,14 +130,13 @@ def get_args():
     parser.add_argument(
         "--input",
         type=str,
-        help="Input base directory",
+        help="Input base directory.",
         default="/store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024",
     )
     parser.add_argument(
         "--output",
         type=str,
-        help="Output base directory",
-        default="/store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024",
+        help="Output base directory. Default is same as input.",
     )
     parser.add_argument(
         "--max_size",
@@ -246,7 +245,7 @@ rm -rf output
 echo "Job completed successfully"
 """.format(
                 redirector=args.redirector,
-                output_dir=args.output,
+                output_dir=args.output if args.output else args.input,
                 cmssw_version=cmssw_version,
             )
         )

@@ -144,8 +144,7 @@ def get_args():
     parser.add_argument(
         "--output",
         type=str,
-        help="Output base directory",
-        default="/store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024_merged",
+        help="Output base directory. Default is [input directory]_merged",
     )
     parser.add_argument(
         "--max_size", type=int, default=2, help="Maximum size of output files in GB"
@@ -180,6 +179,13 @@ def create_condor_script(args, dataset_dir, files, max_size, work_dir, cmssw_ver
 
     # Write the split file lists
     n_jobs = split_files_for_jobs(files, max_size, args, work_dir_dataset)
+
+    output_path = args.output
+    if output_path is None:
+        if args.input.endswith("/"):
+            output_path = args.input[:-1] + "_merged"
+        else:
+            output_path = args.input + "_merged"
 
     # Write merge script
     merge_script = os.path.join(work_dir_dataset, "merge.sh")
@@ -243,7 +249,7 @@ rm merged_$1.root
 echo "Job completed successfully"
 """.format(
                 redirector=args.redirector,
-                output_dir=os.path.join(args.output, dataset_name),
+                output_dir=os.path.join(output_path, dataset_name),
                 cmssw_version=cmssw_version,
             )
         )
