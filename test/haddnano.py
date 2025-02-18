@@ -54,6 +54,18 @@ def open_files(input_files):
     return file_handles, go_fast
 
 
+def abbreviate_list(lst, max_items=5):
+    """Returns a string with an abbreviated list if it's too long."""
+    if len(lst) > max_items:
+        return (
+            str(lst[:max_items])[:-1]
+            + ", ... ("
+            + str(len(lst) - max_items)
+            + " more)]"
+        )
+    return str(lst)
+
+
 if "__main__" in __name__:
     # Input & output
     if len(sys.argv) < 3:
@@ -76,10 +88,10 @@ if "__main__" in __name__:
         output_file.SetCompressionSettings(file_handles[0].GetCompressionSettings())
     output_file.cd()
 
-    # Loop over all keys in first file
+    # Loop over all keys in first file: this loops over all top-level objects (TTrees)
     for key in file_handles[0].GetListOfKeys():
         name = key.GetName()
-        print("Merging" + str(name))
+        print("Merging tree: " + str(name))
         obj = key.ReadObj()
         cl = ROOT.TClass.GetClass(key.GetClassName())
         inputs = ROOT.TList()
@@ -87,16 +99,24 @@ if "__main__" in __name__:
         # Make sure we are merging trees
         is_tree = obj.IsA().InheritsFrom(ROOT.TTree.Class())
         if not is_tree:
-            print("Cannot handle " + str(obj.IsA().GetName()))
+            print(
+                "Cannot handle "
+                + str(obj.IsA().GetName())
+                + ". Not a TTree. Skipping..."
+            )
             continue
 
         obj = obj.CloneTree(-1, "fast" if go_fast else "")
         branch_names = set([x.GetName() for x in obj.GetListOfBranches()])
 
-        # Loop over all input files
-        for fh in file_handles[1:]:
+        # Loop over all input files. Will merge the specified trees from all input files
+        for i_fh, fh in enumerate(file_handles[1:], start=1):
             other_obj = fh.GetListOfKeys().FindObject(name).ReadObj()
+            if other_obj.GetEntries() == 0:
+                print("No entries, moving on.")
+                continue
             inputs.Add(other_obj)
+            print("Merging tree " + name + " from file " + str(i_fh + 1))
             if obj.GetName() == "Events":
                 other_obj.SetAutoFlush(0)
                 other_branches = set(
@@ -105,16 +125,18 @@ if "__main__" in __name__:
                 missing_branches = list(branch_names - other_branches)
                 additional_branches = list(other_branches - branch_names)
                 print(
-                    "missing: "
-                    + str(missing_branches)
-                    + "\n Additional:"
-                    + str(additional_branches)
+                    "\tMissing: "
+                    + abbreviate_list(missing_branches)
+                    + "\n\tAdditional: "
+                    + abbreviate_list(additional_branches)
                 )
                 for br in missing_branches:
                     # fill "Other"
+                    print("checkpoint 1")
                     zero_fill(other_obj, br, obj.GetListOfBranches().FindObject(br))
                 for br in additional_branches:
                     # fill main
+                    print("checkpoint 2")
                     branch_names.add(br)
                     zero_fill(obj, br, other_obj.GetListOfBranches().FindObject(br))
             if obj.GetName() == "Runs":
@@ -125,10 +147,10 @@ if "__main__" in __name__:
                 missing_branches = list(branch_names - other_branches)
                 additional_branches = list(other_branches - branch_names)
                 print(
-                    "missing: "
-                    + str(missing_branches)
-                    + "\n Additional:"
-                    + str(additional_branches)
+                    "\tMissing: "
+                    + abbreviate_list(missing_branches)
+                    + "\n\tAdditional: "
+                    + abbreviate_list(additional_branches)
                 )
                 for br in missing_branches:
                     # fill "Other"
