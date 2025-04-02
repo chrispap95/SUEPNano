@@ -41,6 +41,8 @@ def query_das(dataset):
 def categorize_dataset(dataset_name):
     """Categorize dataset based on its name"""
     categories = {
+        "QCD_HT_TuneCP5_13TeV-madgraphMLM-pythia8": r"QCD_HT.*_TuneCP5_13TeV-madgraphMLM-pythia8",
+        "QCD_HT_TuneCP5_PSWeights_13TeV-madgraph-pythia8": r"QCD_HT.*_TuneCP5_PSWeights_13TeV-madgraph-pythia8",
         "QCD_MuEnriched": r"QCD_Pt-.*MuEnriched",
         "DY_Inclusive": r"DYJetsToLL_M-(?:10to50|50)_.*(?:amcatnlo|madgraph)",
         "DY_NJets": r"DY[1-9]JetsToLL_M-50",
