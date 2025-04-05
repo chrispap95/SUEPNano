@@ -18,7 +18,7 @@ params.setDefault("inputFiles", "miniaod.root")
 params.setDefault("outputFile", "nano_skim.root")
 
 params.register(
-    "era", "2018", VarParsing.multiplicity.singleton, VarParsing.varType.string, "era"
+    "era", "2022", VarParsing.multiplicity.singleton, VarParsing.varType.string, "era"
 )
 
 params.register(
@@ -48,24 +48,17 @@ params.register(
 
 # Parse command line arguments
 params.parseArguments()
-if params.verbose:
-    print(params)
+print(params)
 
 # Define the process
-if params.era == "2016APV":
-    from Configuration.Eras.Era_Run2_2016_HIPM_cff import Run2_2016_HIPM as era
-elif params.era == "2016":
-    from Configuration.Eras.Era_Run2_2016_cff import Run2_2016 as era
-elif params.era == "2017":
-    from Configuration.Eras.Era_Run2_2017_cff import Run2_2017 as era
-elif params.era == "2018":
-    from Configuration.Eras.Era_Run2_2018_cff import Run2_2018 as era
+if "2022" in params.era:
+    from Configuration.Eras.Era_Run3_cff import Run3 as era
+elif "2023" in params.era:
+    from Configuration.Eras.Era_Run3_2023_cff import Run3_2023 as era
 else:
     raise ValueError("Invalid era: %s" % params.era)
 
-from Configuration.Eras.Modifier_run2_nanoAOD_106Xv2_cff import run2_nanoAOD_106Xv2
-
-process = cms.Process("NANO", era, run2_nanoAOD_106Xv2)
+process = cms.Process('NANO', era)
 
 # import of standard configurations
 process.load("Configuration.StandardSequences.Services_cff")
@@ -88,7 +81,37 @@ process.source = cms.Source(
     secondaryFileNames=cms.untracked.vstring(),
 )
 
-process.options = cms.untracked.PSet()
+process.options = cms.untracked.PSet(
+    FailPath = cms.untracked.vstring(),
+    IgnoreCompletely = cms.untracked.vstring(),
+    Rethrow = cms.untracked.vstring(),
+    SkipEvent = cms.untracked.vstring(),
+    accelerators = cms.untracked.vstring('*'),
+    allowUnscheduled = cms.obsolete.untracked.bool,
+    canDeleteEarly = cms.untracked.vstring(),
+    deleteNonConsumedUnscheduledModules = cms.untracked.bool(True),
+    dumpOptions = cms.untracked.bool(False),
+    emptyRunLumiMode = cms.obsolete.untracked.string,
+    eventSetup = cms.untracked.PSet(
+        forceNumberOfConcurrentIOVs = cms.untracked.PSet(
+            allowAnyLabel_=cms.required.untracked.uint32
+        ),
+        numberOfConcurrentIOVs = cms.untracked.uint32(0)
+    ),
+    fileMode = cms.untracked.string('FULLMERGE'),
+    forceEventSetupCacheClearOnNewRun = cms.untracked.bool(False),
+    holdsReferencesToDeleteEarly = cms.untracked.VPSet(),
+    makeTriggerResults = cms.obsolete.untracked.bool,
+    modulesToIgnoreForDeleteEarly = cms.untracked.vstring(),
+    numberOfConcurrentLuminosityBlocks = cms.untracked.uint32(0),
+    numberOfConcurrentRuns = cms.untracked.uint32(1),
+    numberOfStreams = cms.untracked.uint32(0),
+    numberOfThreads = cms.untracked.uint32(1),
+    printDependencies = cms.untracked.bool(False),
+    sizeOfStackForThreadsInKB = cms.optional.untracked.uint32,
+    throwIfIllegalParameter = cms.untracked.bool(True),
+    wantSummary = cms.untracked.bool(False)
+)
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
@@ -115,18 +138,11 @@ process.NANOAODoutput = cms.OutputModule(
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
 
-process.GlobalTag = GlobalTag(process.GlobalTag, "106X_dataRun2_v35", "")
+process.GlobalTag = GlobalTag(process.GlobalTag, "130X_dataRun3_v2", "")
 
 
 # HLT filter and skimmer
-if params.era == "2016APV" or params.era == "2016":
-    process.load("PhysicsTools.SUEPNano.hlt_skim_2016_cff")
-elif params.era == "2017":
-    process.load("PhysicsTools.SUEPNano.hlt_skim_2017_cff")
-elif params.era == "2018":
-    process.load("PhysicsTools.SUEPNano.hlt_skim_2018_cff")
-else:
-    raise ValueError("Invalid era: %s" % params.era)
+process.load("PhysicsTools.SUEPNano.hlt_skim_Run3_cff")
 process.load("PhysicsTools.SUEPNano.muon_skim_cff")
 process.skim_step = cms.Path(process.hltHighLevel * process.muon_skim)
 
@@ -172,12 +188,6 @@ process.nanoSequenceMC.remove(process.rivetProducerHTXS)
 process.nanoSequenceMC.remove(process.HTXSCategoryTable)
 
 # End of customisation functions
-
-# Automatic addition of the customisation function from Configuration.DataProcessing.Utils
-from Configuration.DataProcessing.Utils import addMonitoring
-
-# call to customisation function addMonitoring imported from Configuration.DataProcessing.Utils
-process = addMonitoring(process)
 
 # Customisation from command line
 process.add_(cms.Service("InitRootHandlers", EnableIMT=cms.untracked.bool(False)))

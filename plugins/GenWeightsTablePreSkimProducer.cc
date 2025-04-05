@@ -79,7 +79,7 @@ class GenWeightsTablePreSkimProducer : public edm::global::EDProducer<edm::Strea
 
             auto out = std::make_unique<nanoaod::FlatTable>(1, "genWeight", true);
             out->setDoc("generator weight");
-            out->addColumnValue<float>("", weight, "generator weight", nanoaod::FlatTable::FloatColumn);
+            out->addColumnValue<float>("", weight, "generator weight");
             
             std::string model_label = streamCache(id)->getLabel();
             auto outM = std::make_unique<std::string>((!model_label.empty()) ? std::string("GenModel_") + model_label : "");
