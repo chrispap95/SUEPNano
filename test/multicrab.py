@@ -56,7 +56,12 @@ def get_args():
         help="Submit a validation job with 1 unit",
     )
     parser.add_argument(
-        "--isdata",
+        "--mc",
+        action="store_true",
+        help="To be set if the dataset is MC",
+    )
+    parser.add_argument(
+        "--data",
         action="store_true",
         help="To be set if the dataset is data",
     )
@@ -86,10 +91,10 @@ def make_config(args, dataset):
     config_.General.workArea = "crab_" + args.campaign
     config_.General.transferOutputs = True
     config_.General.transferLogs = True
-    config_.General.requestName = make_request_name(dataset, long=args.isdata)
+    config_.General.requestName = make_request_name(dataset, long=args.data)
 
     config_.JobType.pluginName = "Analysis"
-    config_.JobType.psetName = "NANO_data_cfg.py" if args.isdata else "NANO_mc_cfg.py"
+    config_.JobType.psetName = "NANO_data_cfg.py" if args.data else "NANO_mc_cfg.py"
     config_.JobType.maxMemoryMB = 3000
     config_.JobType.pyCfgParams = running_options + ["era=" + args.era]
     config_.JobType.allowUndistributedCMSSW = True
@@ -104,7 +109,7 @@ def make_config(args, dataset):
         config_.Data.totalUnits = 1
     config_.Data.outLFNDirBase = args.output
     config_.Data.inputDataset = dataset
-    config_.Data.outputDatasetTag = make_dataset_tag(dataset, long=args.isdata)
+    config_.Data.outputDatasetTag = make_dataset_tag(dataset, long=args.data)
     if args.process_partial:
         config_.Data.partialDataset = True
 
@@ -127,6 +132,8 @@ if __name__ == "__main__":
         raise ValueError(
             "Please provide an output location. Example: /store/group/lpcsuep/Muon_counting_search/SUEPNano_UL18_Nov2024"
         )
+    if not (args.data or args.mc):
+        raise ValueError("Please specify either --data or --mc")
 
     datasets = []
     with open(args.dataset, "r") as f:
