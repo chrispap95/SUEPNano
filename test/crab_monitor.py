@@ -28,9 +28,14 @@ def get_args():
         help="Base directory containing CRAB task directories (default: crab_NANO_UL18)",
     )
     parser.add_argument(
-        "--isdata",
+        "--mc",
         action="store_true",
-        help="Flag to indicate data datasets (default: MC)",
+        help="To be set if the dataset is MC",
+    )
+    parser.add_argument(
+        "--data",
+        action="store_true",
+        help="To be set if the dataset is data",
     )
     parser.add_argument(
         "--refresh",
@@ -47,10 +52,10 @@ def get_args():
     return parser.parse_args()
 
 
-def get_task_name(dataset, isdata=False):
+def get_task_name(dataset, data=False):
     """Extract primary dataset name from full dataset path"""
     # Split by '/' and take the first part (index 1, as dataset starts with '/')
-    if isdata:
+    if data:
         return dataset.replace("/", "_")[1:]
     return dataset.split("/")[1]
 
@@ -69,7 +74,7 @@ def find_latest_task_dir(crab_base_dir, primary_name):
     return latest_dir
 
 
-def get_task_directories(json_file, crab_base_dir="crab_NANO_UL18", isdata=False):
+def get_task_directories(json_file, crab_base_dir="crab_NANO_UL18", data=False):
     """
     Parse JSON file containing datasets and find corresponding task directories
 
@@ -99,7 +104,7 @@ def get_task_directories(json_file, crab_base_dir="crab_NANO_UL18", isdata=False
     sys.stdout.flush()
 
     for dataset in datasets:
-        task_name = get_task_name(dataset, isdata)
+        task_name = get_task_name(dataset, data)
         task_dir = find_latest_task_dir(crab_base_dir, task_name)
 
         if task_dir:
@@ -353,9 +358,12 @@ class CRABMonitor(object):
 def main():
     args = get_args()
 
+    if not (args.data or args.mc):
+        raise ValueError("Please specify either --data or --mc")
+
     # Need to convert dataset names to CRAB task directories
     task_dirs, task_to_dataset = get_task_directories(
-        args.datasets, args.crab_dir, args.isdata
+        args.datasets, args.crab_dir, args.data
     )
 
     if not task_dirs:
