@@ -22,6 +22,7 @@ def get_args():
         help="JSON file with list of datasets to monitor",
     )
     parser.add_argument(
+        "-c",
         "--crab-dir",
         type=str,
         default="crab_NANO_UL18",
