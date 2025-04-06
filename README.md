@@ -47,10 +47,10 @@ The input file should be AOD or miniAOD.
 
 ## CRAB Usage
 
-The following command will submit jobs to the CRAB to process the datasets in the `filenames/2022/full_mc_2022.json` file and store the output in the `/store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025` directory:
+The following command will submit jobs to the CRAB to process the datasets in the `datasets/2022/full_mc_2022.json` file and store the output in the `/store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025` directory:
 
 ```bash
-python multicrab.py -d filenames/2022/full_mc_2022.json --mc -c NANO_2022 -o /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025
+python multicrab.py -d datasets/2022/full_mc_2022.json --mc -c NANO_2022 -o /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025
 ```
 
 The "--mc" option is used to indicate that the input files are MC files. Needs to be replaced with "--data" for data files. The `-c` option is used to specify the crab working directory. The `-o` option is used to specify the output EOS directory.
@@ -60,7 +60,7 @@ You can look at the crab configs before submitting them by using the `--nosubnit
 The status can be checked with the CRAB grafana website, the usual crab commands or with the `crab_monitor.py` script:
 
 ```bash
-python crab_monitor.py -d filenames/2022/full_mc_2022.json --mc -c crab_NANO_2022
+python crab_monitor.py -d datasets/2022/full_mc_2022.json --mc -c crab_NANO_2022
 ```
 
 This will create a summary table for the latest submissions for the datasets in the `QCD.json` file and it will save the status details in a file in the directory `crab_monitor_history`. If you want to focus on the submissions that are not finished, you can process this file with the `process_crab_status.py` script:
