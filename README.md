@@ -50,7 +50,7 @@ The input file should be AOD or miniAOD.
 The following command will submit jobs to the CRAB to process the datasets in the `datasets/2022/full_mc_2022.json` file and store the output in the `/store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025` directory:
 
 ```bash
-python multicrab.py -d datasets/2022/full_mc_2022.json --mc -c NANO_2022 -o /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025
+python3 multicrab.py -d datasets/2022/full_mc_2022.json --mc --era 2022 -c NANO_2022 -o /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025
 ```
 
 The "--mc" option is used to indicate that the input files are MC files. Needs to be replaced with "--data" for data files. The `-c` option is used to specify the crab working directory. The `-o` option is used to specify the output EOS directory.
@@ -60,13 +60,13 @@ You can look at the crab configs before submitting them by using the `--nosubnit
 The status can be checked with the CRAB grafana website, the usual crab commands or with the `crab_monitor.py` script:
 
 ```bash
-python crab_monitor.py -d datasets/2022/full_mc_2022.json --mc -c crab_NANO_2022
+python3 crab_monitor.py -d datasets/2022/full_mc_2022.json --mc -c crab_NANO_2022
 ```
 
 This will create a summary table for the latest submissions for the datasets in the `QCD.json` file and it will save the status details in a file in the directory `crab_monitor_history`. If you want to focus on the submissions that are not finished, you can process this file with the `process_crab_status.py` script:
 
 ```bash
-python process_crab_status.py -i crab_monitor_history/filename.csv
+python3 process_crab_status.py -i crab_monitor_history/filename.csv
 ```
 
 and create an `filename_incomplete.json` file to use for further monitoring and resubmissions.
@@ -74,7 +74,7 @@ and create an `filename_incomplete.json` file to use for further monitoring and 
 To resubmit the failed jobs, you can try to resubmit all submissions by using `crab_resubmit_all.sh` or you can resubmit only selected datasets by using the `crab_resubmit.py` script:
 
 ```bash
-python crab_resubmit.py -d incomplete_datasets.json --crab-dir crab_NANO_2022 --maxmemory 4000 --maxjobruntime 500
+python3 crab_resubmit.py -d incomplete_datasets.json --crab-dir crab_NANO_2022 --maxmemory 4000 --maxjobruntime 500
 ```
 
 This will resubmit the failed jobs for the datasets in the `filename_incomplete.json` file with the specified memory and runtime limits.
@@ -84,13 +84,13 @@ This will resubmit the failed jobs for the datasets in the `filename_incomplete.
 `split_trees.py` can be used to split a set of input nanoAOD samples based on the correponding gen-level setup and -optionally- merge the resulting chunks together (i.e. same signal point coming from different nanosuep files). Usage is:
 
 ```bash
-python split_trees.py --input [input directory] --output [output directory] --hadd 
+python3 split_trees.py --input [input directory] --output [output directory] --hadd 
 ```
 
 To submit condor jobs for splitting, you can use the `splitter.py` script:
 
 ```bash
-python splitter.py -d datasets/2022/GluGluToSUEP_2022.json --json --input /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025 --output /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025
+python3 splitter.py -d datasets/2022/GluGluToSUEP_2022.json --json --input /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025 --output /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025
 ./condor_split_<timestamp>/submit_all.sh
 ```
 
@@ -99,13 +99,13 @@ python splitter.py -d datasets/2022/GluGluToSUEP_2022.json --json --input /store
 The output root files can be merged with the `haddnano.py` script:
 
 ```bash
-python haddnano.py merged.root input_files/*.root
+python3 haddnano.py merged.root input_files/*.root
 ```
 
 You can submit condor jobs for merging with the `merge.py` script:
 
 ```bash
-python merge.py --dataset datasets/2022/GluGluToSUEP_2022.json --input /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025
+python3 merge.py --dataset datasets/2022/GluGluToSUEP_2022.json --input /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025
 ./condor_merge_<timestamp>/submit_all.sh
 ```
 
@@ -114,7 +114,7 @@ You should check the options of the script with `python merge.py --help` before 
 **Note:** you can skip the `--dataset` option if you want to scan all files in the input directory. This is useful for processing the data datasets:
 
 ```bash
-python merge.py --input /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025/DoubleMuon --output /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025_merged/
+python3 merge.py --input /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025/DoubleMuon --output /store/group/lpcsuep/Muon_counting_search/SUEPNano_2022_Apr2025_merged/
 ```
 
 Similarly, to process the split signal samples, you can do something like this:
@@ -123,7 +123,7 @@ Similarly, to process the split signal samples, you can do something like this:
 for era in 2022 2022EE 2023 2023BPix; do
     for suep in $(eosls /store/user/lpcsuep/Muon_counting_search/SUEPNano_${era}_Apr2025/ | grep "SUEP.*split"); do
         basepath=/store/user/lpcsuep/Muon_counting_search
-        python merge.py --input ${basepath}/SUEPNano_${era}_Apr2025/$suep --output ${basepath}/SUEPNano_${era}_Apr2025/$suep
+        python3 merge.py --input ${basepath}/SUEPNano_${era}_Apr2025/$suep --output ${basepath}/SUEPNano_${era}_Apr2025/$suep
         ./$(ls -td -- condor_merge* | head -n 1)/submit_all.sh
     done
 done
