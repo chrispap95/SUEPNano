@@ -70,6 +70,12 @@ def get_args():
         action="store_true",
         help="Process only the part of the dataset that is on disk",
     )
+    parser.add_argument(
+        "--units-per-job",
+        type=int,
+        help="Number of units per job. Default is 10.",
+        default=10,
+    )
     args = parser.parse_args()
     return args
 
@@ -103,7 +109,7 @@ def make_config(args, dataset):
     config_.Data.inputDBS = "global"
     config_.Data.splitting = "FileBased"
     config_.Data.publication = False
-    config_.Data.unitsPerJob = 10
+    config_.Data.unitsPerJob = args.units_per_job
     if args.validation:
         config_.Data.unitsPerJob = 1
         config_.Data.totalUnits = 1
