@@ -57,6 +57,8 @@ The "--mc" option is used to indicate that the input files are MC files. Needs t
 
 You can look at the crab configs before submitting them by using the `--nosubnit` option. If you want to submit only one job for validation purposes, you can use the `--validation` option. These can be useful if you are submitting for the first time.
 
+You can pass the `--units-per-job` option to specify the number of input files per job. The default is 10 and works fine for MC bkg. For data and signal, I suggest using a lower number (e.g. 4 or 5) to avoid very long job runtimes.
+
 The status can be checked with the CRAB grafana website, the usual crab commands or with the `crab_monitor.py` script:
 
 ```bash
