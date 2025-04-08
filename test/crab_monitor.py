@@ -200,7 +200,7 @@ class CRABMonitor(object):
             "task_name",
         ]
 
-        with open(self.output_file, "wb") as csvfile:
+        with open(self.output_file, "w") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
 
@@ -208,7 +208,7 @@ class CRABMonitor(object):
         """Append a single status entry to the CSV file"""
         import csv
 
-        with open(self.output_file, "ab") as csvfile:
+        with open(self.output_file, "a") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=status_entry.keys())
             writer.writerow(status_entry)
 
