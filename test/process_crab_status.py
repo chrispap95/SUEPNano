@@ -52,7 +52,7 @@ def main():
         # Write to JSON file
         output_filename = args.output
         if output_filename is None:
-            output_filename = args.input.replace(".csv", "_incomplete.json")
+            output_filename = args.input.replace("*", "").replace(".csv", "_incomplete.json")
         with open(output_filename, "w") as f:
             json.dump(incomplete_datasets, f, indent=2)
 

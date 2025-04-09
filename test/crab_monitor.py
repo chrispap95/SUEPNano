@@ -295,18 +295,18 @@ class CRABMonitor(object):
 
                         # Create status entry for CSV
                         status_entry = {
-                            "timestamp": current_time,
-                            "task_name": task_name,
-                            "dataset": dataset,
                             "status": status["status"],
-                            "completion": status["completion"],
-                            "total": status["total"],
-                            "running": status["running"],
+                            "timestamp": current_time,
+                            "idle": status["idle"],
                             "finished": status["finished"],
+                            "dataset": dataset,
+                            "running": status["running"],
+                            "total": status["total"],
+                            "completion": status["completion"],
                             "transferred": status["transferred"],
                             "failed": status["failed"],
-                            "idle": status["idle"],
                             "transferring": status["transferring"],
+                            "task_name": task_name,
                         }
 
                         # Append to CSV file immediately
