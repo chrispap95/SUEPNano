@@ -125,7 +125,7 @@ Similarly, to process the split signal samples, you can do something like this:
 for era in 2022 2022EE 2023 2023BPix; do
     for suep in $(eosls /store/user/lpcsuep/Muon_counting_search/SUEPNano_${era}_Apr2025/ | grep "SUEP.*split"); do
         basepath=/store/user/lpcsuep/Muon_counting_search
-        python3 merge.py --input ${basepath}/SUEPNano_${era}_Apr2025/$suep --output ${basepath}/SUEPNano_${era}_Apr2025/$suep
+        python3 merge.py --input ${basepath}/SUEPNano_${era}_Apr2025/$suep --output ${basepath}/SUEPNano_${era}_Apr2025_merged/$suep
         ./$(ls -td -- condor_merge* | head -n 1)/submit_all.sh
     done
 done
