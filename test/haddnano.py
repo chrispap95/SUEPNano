@@ -19,12 +19,12 @@ def zero_fill(tree, br_name, br_obj, allow_non_bool=False):
                 "Did not expect to back fill non-boolean branches",
                 tree,
                 br_name,
-                br_obj.GetLeaf(br).GetTypeName(),
+                br_obj.GetLeaf(br_name).GetTypeName(),
             )
         )
     else:
         if brType not in branch_type_dict:
-            raise RuntimeError("Impossible to backfill branch of type %s" % brType)
+            raise RuntimeError(f"Impossible to backfill branch of type {brType}")
         buff = numpy.zeros(1, dtype=numpy.dtype(branch_type_dict[brType][0]))
         b = tree.Branch(br_name, buff, br_name + "/" + branch_type_dict[brType][1])
         # be sure we do not trigger flushing
@@ -42,7 +42,7 @@ def open_files(input_files):
         print("Adding file" + str(input_file))
         file_handle = ROOT.TFile.Open(input_file)
         if not file_handle or file_handle.IsZombie():
-            print("Error opening file %s" % input_file)
+            print(f"Error opening file {input_file}")
             continue
         file_handles.append(file_handle)
         if len(file_handles) > 1 and (

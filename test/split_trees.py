@@ -43,7 +43,7 @@ def get_input_files(input):
         with open(input, "r") as f:
             input_files = [x.strip() for x in f.readlines()]
     else:
-        input_files = glob.glob("{}/*.root".format(input))
+        input_files = glob.glob(f"{input}/*.root")
     return input_files
 
 
@@ -87,7 +87,7 @@ def get_event_list_per_model(f_in):
     tree.SetBranchStatus("GenModel*", 1)
 
     # Loop over all events and fill the entry list for each model
-    for n_event in tqdm(xrange(n_events), desc="Scanning events", unit="Events"):  # type: ignore [name-defined]
+    for n_event in tqdm(range(n_events), desc="Scanning events", unit="Events"):
         tree.GetEntry(n_event)
         for model in genmodel_branches:
             if getattr(tree, "GenModel_" + model):
@@ -136,7 +136,7 @@ def splitting(args, input_file):
     for model in tqdm(gen_models, desc="Saving models", unit="files"):
         output_file_name = os.path.join(
             args.output,
-            os.path.basename(input_file).replace(".root", "_%s.root" % model),
+            os.path.basename(input_file).replace(".root", f"_{model}.root"),
         )
         f_out = ROOT.TFile.Open(output_file_name, "recreate")
         for key in keys:
@@ -174,19 +174,19 @@ def splitting(args, input_file):
 def split_wrapper(args, input_files):
     all_scan_points = set()
     for i, input_file in enumerate(input_files, 1):
-        print("Splitting file {}/{}: {}".format(i, len(input_files), input_file))
+        print(f"Splitting file {i}/{len(input_files)}: {input_file}")
         all_scan_points.update(splitting(args, input_file))
     return all_scan_points
 
 
 def hadd_files(args, scan_point):
     cmd = [
-        "python",
+        "python3",
         "haddnano.py",
-        os.path.join(args.output, "%s_merged.root" % scan_point),
-        os.path.join(args.output, "*%s.root" % scan_point),
+        os.path.join(args.output, f"{scan_point}_merged.root"),
+        os.path.join(args.output, f"*{scan_point}.root"),
     ]
-    print("Merging: %s" % scan_point)
+    print(f"Merging: {scan_point}")
     process = subprocess.Popen(
         " ".join(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )

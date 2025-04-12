@@ -17,15 +17,14 @@ def eos_ls(args, directory):
 
     for attempt in range(max_retries):
         try:
-            command = "source ~/.bash_profile 2>/dev/null; eos {} ls {}".format(
-                args.redirector, directory
-            )
+            # Have to use shell=True to run eos command because it's a shell 
+            # function inside a singularity image
+            command = f"eos {args.redirector} ls {directory}"
             result = subprocess.Popen(
                 command,
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                executable="/bin/bash",
             )
             out, err = result.communicate()
             # If error occurred or output is empty, try again
@@ -48,17 +47,17 @@ def get_datasets_and_files(input_path, list_of_datasets):
     Get all datasets and their ROOT files in a single pass.
     Returns a dictionary {dataset_dir: [root_files]}
     """
-    print("Scanning input directory: {}".format(input_path))
+    print(f"Scanning input directory: {input_path}")
     dataset_files = {}
 
     # Process each potential dataset directory
     for i, dataset in enumerate(list_of_datasets, 1):
-        print("Scanning {} {}/{}".format(dataset, i, len(list_of_datasets)))
+        print(f"Scanning {dataset} {i}/{len(list_of_datasets)}")
         dataset_path = os.path.join(args.input, dataset)
         files = get_root_files_recursive(args, dataset_path)
         if files:  # Only include directories that have ROOT files
             dataset_files[dataset_path] = files
-            print("  -> Found {} ROOT files".format(len(files)))
+            print(f"  -> Found {len(files)} ROOT files")
         else:
             print("  -> No ROOT files found")
 
@@ -68,7 +67,7 @@ def get_datasets_and_files(input_path, list_of_datasets):
 def get_root_files_recursive(args, directory):
     """Recursively get all .root files from a directory"""
     if args.verbose:
-        print("  Scanning {}".format(directory))
+        print(f"  Scanning {directory}")
 
     # Skip if this is a log directory
     if "/log" in directory:
@@ -90,7 +89,7 @@ def get_root_files_recursive(args, directory):
         if item.endswith(".root"):
             result.append(full_path)
             if args.verbose:
-                print("    Found ROOT file: {}".format(item))
+                print(f"    Found ROOT file: {item}")
         else:
             # Try to list the item - if it succeeds and returns content, it's a directory
             subdir_contents = eos_ls(args, full_path)
@@ -102,7 +101,7 @@ def get_root_files_recursive(args, directory):
 
 def eos_file_size(args, file_path):
     """Get the size of a file on EOS in bytes"""
-    command = "eos {} stat {}".format(args.redirector, file_path)
+    command = f"eos {args.redirector} stat {file_path}"
     result = subprocess.Popen(
         command, shell=True, stdout=subprocess.PIPE, executable="/bin/bash"
     )
@@ -174,7 +173,7 @@ def create_condor_script(args, dataset_dir, files, max_size, work_dir, cmssw_ver
     """Create a condor submission script and executable for this dataset"""
     dataset_name = os.path.basename(dataset_dir)
 
-    work_dir_dataset = os.path.join(work_dir, "condor_{}".format(dataset_name))
+    work_dir_dataset = os.path.join(work_dir, f"condor_{dataset_name}")
     if not os.path.exists(work_dir_dataset):
         os.makedirs(work_dir_dataset)
 
@@ -183,9 +182,10 @@ def create_condor_script(args, dataset_dir, files, max_size, work_dir, cmssw_ver
 
     # Write split script
     split_script = os.path.join(work_dir_dataset, "split.sh")
+    output = args.output if args.output else args.input
     with open(split_script, "w") as f:
         f.write(
-            """#!/bin/bash
+            f"""#!/bin/bash
 # Date/time of start of job
 echo "Starting job on " $(date)
 # Condor job is running on this node 
@@ -208,7 +208,7 @@ tmp_dir=$(mktemp -d -p .)
 cd $tmp_dir
 tar -xf ../{cmssw_version}.tar.gz
 rm ../{cmssw_version}.tar.gz
-export SCRAM_ARCH=slc7_amd64_gcc700
+export SCRAM_ARCH=el8_amd64_gcc11
 if [ ! -d {cmssw_version}/src ]; then
     mkdir -p {cmssw_version}/src
 fi
@@ -218,7 +218,7 @@ eval $(scramv1 runtime -sh) # cmsenv is an alias not on the workers
 
 # Do the splitting
 mkdir output
-python split_trees.py -i files_${{job_id}}.txt -o output --hadd
+python3 split_trees.py -i files_${{job_id}}.txt -o output --hadd
 
 # Check if merge was successful
 if [ $? -ne 0 ]; then
@@ -232,7 +232,7 @@ for f in output/SUEP*merged.root; do
     model=$(basename "$f")
     model=${{model%_merged.root}}
     # Set destination and copy
-    dest={redirector}{output_dir}/${{dataset_name}}_split/${{model}}/split_${{job_id}}.root
+    dest={args.redirector}{output}/${{dataset_name}}_split/${{model}}/split_${{job_id}}.root
     xrdcp -f output/${{model}}_merged.root $dest
     if [ $? -ne 0 ]; then
         echo "Copy to EOS failed!"
@@ -243,24 +243,19 @@ done
 echo "Cleaning up"
 rm -rf output
 echo "Job completed successfully"
-""".format(
-                redirector=args.redirector,
-                output_dir=args.output if args.output else args.input,
-                cmssw_version=cmssw_version,
-            )
-        )
+""")
     os.chmod(split_script, 0o755)
 
     # Get CMSSW tarball name
-    cmssw_tarball = "{}.tar.gz".format(cmssw_version)
+    cmssw_tarball = f"{cmssw_version}.tar.gz"
 
     # Create the condor submit file
     submit_file = os.path.join(work_dir_dataset, "submit.jdl")
     with open(submit_file, "w") as f:
         f.write(
-            """# Condor submit file for merging files
+            f"""# Condor submit file for merging files
 universe = vanilla
-executable = {executable}
+executable = {split_script}
 arguments = {dataset_name} $(ProcId)
 output = {work_dir_dataset}/$(ClusterId).$(ProcId).stdout
 error = {work_dir_dataset}/$(ClusterId).$(ProcId).stderr
@@ -273,8 +268,8 @@ when_to_transfer_output = ON_EXIT
 
 # Requirements and resources
 x509userproxy = $ENV(X509_USER_PROXY)
-request_memory = {memory}
-+REQUIRED_OS = "rhel7"
+request_memory = {args.memory,}
++REQUIRED_OS = "rhel8"
 +DesiredOS = REQUIRED_OS
 
 # Exit and hold
@@ -301,15 +296,7 @@ periodic_hold_reason = strcat("Job held by PERIODIC_HOLD due to ", \\
                 strcat("memory usage ",ResidentSetSize," greater than requested ",RequestMemory*1000))))), ".")
 
 queue {n_jobs}
-""".format(
-                executable=split_script,
-                work_dir_dataset=work_dir_dataset,
-                n_jobs=n_jobs,
-                cmssw_tarball=cmssw_tarball,
-                dataset_name=dataset_name,
-                memory=args.memory,
-            )
-        )
+""")
 
     return submit_file
 
@@ -334,7 +321,7 @@ def split_files_for_jobs(files, max_size, args, work_dir):
 
     # Write each group to a separate file
     for i, group in enumerate(groups):
-        output_file = os.path.join(work_dir, "files_{}.txt".format(i))
+        output_file = os.path.join(work_dir, f"files_{i}.txt")
         with open(output_file, "w") as f:
             for file_path in group:
                 f.write(args.redirector + file_path + "\n")
@@ -343,37 +330,42 @@ def split_files_for_jobs(files, max_size, args, work_dir):
 
 
 def create_cmssw_tarball():
-    """Create a tarball of the current CMSSW environment"""
-    if not "CMSSW_BASE" in os.environ:
+    """Create a tarball of the current CMSSW environment."""
+    if "CMSSW_BASE" not in os.environ:
         print("Please run cmsenv in your CMSSW environment first")
         sys.exit(1)
 
     cmssw_base = os.environ["CMSSW_BASE"]
     cmssw_version = os.path.basename(cmssw_base)
-    tarball = "{}.tar.gz".format(cmssw_version)
+    cwd = os.getcwd()
+    tarball_path = os.path.join(cwd, f"{cmssw_version}.tar.gz")
 
-    # Check if tarball already exists
-    if os.path.exists(tarball):
-        os.remove(tarball)
+    # Remove existing tarball if it exists
+    if os.path.exists(tarball_path):
+        os.remove(tarball_path)
 
     print("Creating CMSSW tarball...")
-    # Get the relative path from where we are to CMSSW_BASE
-    cwd = os.getcwd()
+
+    # Change to the parent directory of CMSSW_BASE
     os.chdir(os.path.dirname(cmssw_base))
 
-    # Create the tarball excluding unnecessary directories
-    cmd = (
-        "tar --exclude-caches-all --exclude-vcs -zcf {cwd}/{version}.tar.gz -C {version}/.. "
-        "{version} --exclude=src --exclude=tmp --exclude=*.tar.gz --exclude=*.root"
-    ).format(cwd=cwd, tarball=tarball, version=cmssw_version)
-    subprocess.check_call(cmd.split())
-    os.chdir(cwd)
-    print(
-        "Created CMSSW tarball: {} of size {} MB".format(
-            tarball, round(os.path.getsize(tarball) / 1000.0**2, 1)
-        )
-    )
-    return tarball, cmssw_version
+    try:
+        cmd = [
+            "tar", "--exclude-caches-all", "--exclude-vcs",
+            "--exclude=src", "--exclude=tmp", "--exclude=*.tar.gz", "--exclude=*.root",
+            "-zcf", f"{cmssw_version}.tar.gz", cmssw_version
+        ]
+        subprocess.check_call(cmd)
+
+        # Move the tarball to the original directory
+        os.rename(f"{cmssw_version}.tar.gz", tarball_path)
+    finally:
+        # Ensure we always go back to the original directory
+        os.chdir(cwd)
+
+    size_mb = round(os.path.getsize(tarball_path) / 1e6, 1)
+    print(f"Created CMSSW tarball: {tarball_path} of size {size_mb} MB")
+    return tarball_path, cmssw_version
 
 
 if __name__ == "__main__":
@@ -398,15 +390,15 @@ if __name__ == "__main__":
     # Get all datasets and their files in one pass
     dataset_files = get_datasets_and_files(args.input, list_of_datasets)
 
-    print("Found {} datasets to process:".format(len(dataset_files)))
+    print(f"Found {len(dataset_files)} datasets to process:")
 
     # Create a working directory for condor files
-    work_dir = "condor_split_{}".format(time.strftime("%Y%m%d-%H%M%S"))
+    work_dir = f"condor_split_{time.strftime('%Y%m%d-%H%M%S')}"
     os.makedirs(work_dir)
 
     submit_files = []
     for dataset_dir in dataset_files.keys():
-        print("  {} ({} files)".format(dataset_dir, len(dataset_files[dataset_dir])))
+        print(f"  {dataset_dir} ({len(dataset_files[dataset_dir])} files)")
 
         # Create condor submission for this dataset
         submit_file = create_condor_script(
@@ -424,13 +416,9 @@ if __name__ == "__main__":
     with open(submit_script, "w") as f:
         f.write("#!/bin/bash\n")
         for submit_file in submit_files:
-            f.write("condor_submit {}\n".format(submit_file))
+            f.write(f"condor_submit {submit_file}\n")
     os.chmod(submit_script, 0o755)
 
     print("\nCreated condor submission files.")
-    print("To submit all jobs, run: ./{}".format(submit_script))
-    print(
-        "Or submit individual datasets with: condor_submit {}/condor_*/submit.jdl".format(
-            work_dir
-        )
-    )
+    print(f"To submit all jobs, run: ./{submit_script}")
+    print(f"Or submit individual datasets with: condor_submit {work_dir}/condor_*/submit.jdl")

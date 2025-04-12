@@ -111,7 +111,7 @@ python3 merge.py --dataset datasets/2022/GluGluToSUEP_2022.json --input /store/g
 ./condor_merge_<timestamp>/submit_all.sh
 ```
 
-You should check the options of the script with `python merge.py --help` before running it.
+You should check the options of the script with `python3 merge.py --help` before running it.
 
 **Note:** you can skip the `--dataset` option if you want to scan all files in the input directory. This is useful for processing the data datasets:
 
