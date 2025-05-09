@@ -9,6 +9,7 @@ def zero_fill(tree, br_name, br_obj, allow_non_bool=False):
         "Bool_t": ("?", "O"),
         "Float_t": ("f4", "F"),
         "UInt_t": ("u4", "i"),
+        "Int_t": ("i4", "i"),
         "Long64_t": ("i8", "L"),
         "Double_t": ("f8", "D"),
     }
@@ -118,10 +119,15 @@ if "__main__" in __name__:
             inputs.Add(other_obj)
             print("Merging tree " + name + " from file " + str(i_fh + 1))
             if obj.GetName() == "Events":
-                other_obj.SetAutoFlush(0)
                 other_branches = set(
                     [x.GetName() for x in other_obj.GetListOfBranches()]
                 )
+
+                if "genWeight" not in other_branches:
+                    print(f"Skipping Events tree in file {i_fh + 1} (missing genWeight)")
+                    continue
+
+                other_obj.SetAutoFlush(0)
                 missing_branches = list(branch_names - other_branches)
                 additional_branches = list(other_branches - branch_names)
                 print(
@@ -132,11 +138,9 @@ if "__main__" in __name__:
                 )
                 for br in missing_branches:
                     # fill "Other"
-                    print("checkpoint 1")
                     zero_fill(other_obj, br, obj.GetListOfBranches().FindObject(br))
                 for br in additional_branches:
                     # fill main
-                    print("checkpoint 2")
                     branch_names.add(br)
                     zero_fill(obj, br, other_obj.GetListOfBranches().FindObject(br))
             if obj.GetName() == "Runs":
