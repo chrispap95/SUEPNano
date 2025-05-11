@@ -7,6 +7,10 @@
     https://github.com/cms-sw/cmssw/blob/a54a2a91c59f52c3cb7ed96da7551a71d53745bf/PhysicsTools/NanoAOD/plugins/GenWeightsTableProducer.cc)
 */
 
+#include <iostream>
+#include <regex>
+#include <string>
+
 #include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/Run.h"
@@ -14,6 +18,7 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/NanoAOD/interface/FlatTable.h"
 #include "DataFormats/NanoAOD/interface/MergeableCounterTable.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
@@ -29,6 +34,8 @@ class GenWeightsTablePreSkimProducer : public edm::global::EDProducer<edm::Strea
     public:
         GenWeightsTablePreSkimProducer(edm::ParameterSet const& params)
         : genTag_(consumes<GenEventInfoProduct>(params.getParameter<edm::InputTag>("genEvent"))),
+          genParticlesTag_(
+            consumes<std::vector<reco::GenParticle>>(params.getParameter<edm::InputTag>("genParticles"))),
           genLumiInfoHeadTag_(
             mayConsume<GenLumiInfoHeader, edm::InLumi>(params.getParameter<edm::InputTag>("genLumiInfoHeader"))) {
             produces<nanoaod::FlatTable>();
@@ -77,17 +84,42 @@ class GenWeightsTablePreSkimProducer : public edm::global::EDProducer<edm::Strea
             iEvent.getByToken(genTag_, genInfo);
             double weight = genInfo->weight();
 
-            auto out = std::make_unique<nanoaod::FlatTable>(1, "genWeight", true);
-            out->setDoc("generator weight");
-            out->addColumnValue<float>("", weight, "generator weight", nanoaod::FlatTable::FloatColumn);
-            
             std::string model_label = streamCache(id)->getLabel();
+            
+            // Extract the mS value from the model label
+            bool keepEvent = true;
+            if (!model_label.empty()) {
+                std::regex pattern("mS([0-9]+\\.[0-9]+)");
+                std::smatch match;
+                double mS_value = 0.0;
+                if (std::regex_search(model_label, match, pattern)) {
+                    std::string value = match[1]; // Extract the matched number as a string
+                    mS_value = std::stod(value); // Convert to double if needed
+                }
+
+                edm::Handle<std::vector<reco::GenParticle>> genParticles;
+                iEvent.getByToken(genParticlesTag_, genParticles);            
+                
+                if (genParticles.isValid()) {
+                    for (const auto& particle : *genParticles) {
+                        if ((particle.pdgId() == 25) && (particle.status() == 62)) {
+                            if (abs(particle.mass() - mS_value) / mS_value > 0.004) keepEvent = false;
+                            break;
+                        }
+                    }
+                }
+            }
+
             auto outM = std::make_unique<std::string>((!model_label.empty()) ? std::string("GenModel_") + model_label : "");
             iEvent.put(std::move(outM), "genModel");
-            
-            counter->incGenOnly(weight);
-            
-            iEvent.put(std::move(out));
+
+            if (keepEvent) {
+                auto out = std::make_unique<nanoaod::FlatTable>(1, "genWeight", true);
+                out->setDoc("generator weight");
+                out->addColumnValue<float>("", weight, "generator weight", nanoaod::FlatTable::FloatColumn);                
+                counter->incGenOnly(weight);
+                iEvent.put(std::move(out));
+            }
         }
 
         // Merge the stream counter map into the global counter map
@@ -122,6 +154,8 @@ class GenWeightsTablePreSkimProducer : public edm::global::EDProducer<edm::Strea
             edm::ParameterSetDescription desc;
             desc.add<edm::InputTag>("genEvent", edm::InputTag("generator"))
                 ->setComment("tag for the GenEventInfoProduct, to get the main weight");
+            desc.add<edm::InputTag>("genParticles", edm::InputTag("genParticles"))
+                ->setComment("tag for the GenParticles, to get the model string");
             desc.add<edm::InputTag>("genLumiInfoHeader", edm::InputTag("generator"))
                 ->setComment("tag for the GenLumiInfoProduct, to get the model string");
             descriptions.add("genWeights", desc);
@@ -129,6 +163,7 @@ class GenWeightsTablePreSkimProducer : public edm::global::EDProducer<edm::Strea
 
     protected:
         const edm::EDGetTokenT<GenEventInfoProduct> genTag_;
+        const edm::EDGetTokenT<std::vector<reco::GenParticle>> genParticlesTag_;
         const edm::EDGetTokenT<GenLumiInfoHeader> genLumiInfoHeadTag_;
 };
 

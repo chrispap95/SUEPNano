@@ -2,8 +2,9 @@
 <use name="FWCore/ParameterSet"/>
 <use name="FWCore/MessageLogger"/>
 <use name="FWCore/Utilities"/>
-<use name="DataFormats/PatCandidates"/>
+<use name="DataFormats/HepMCCandidate"/>
 <use name="DataFormats/NanoAOD"/>
+<use name="DataFormats/PatCandidates"/>
 <use name="SimDataFormats/GeneratorProducts"/>
 <use name="PhysicsTools/SUEPNano"/>
 <flags EDM_PLUGIN="1"/>
