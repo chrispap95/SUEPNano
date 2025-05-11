@@ -164,6 +164,7 @@ elif params.era == "2023BPix":
 process.genWeightSum = cms.EDProducer(
     "GenWeightsTablePreSkimProducer",
     genEvent=cms.InputTag("generator"),
+    genParticles=cms.InputTag("prunedGenParticles"),
 )
 process.genweight_step = cms.Path(process.genWeightSum)
 
@@ -174,13 +175,17 @@ process.NANOAODSIMoutput.outputCommands.extend(
 )
 
 # HLT filter and skimmer
+process.load("PhysicsTools.SUEPNano.gen_model_verifier_cff")
 process.load("PhysicsTools.SUEPNano.hlt_skim_Run3_cff")
 process.load("PhysicsTools.SUEPNano.muon_skim_cff")
-process.skim_step = cms.Path(process.hltHighLevel * process.muon_skim)
+process.skim_step = cms.Path(
+    process.gen_model_verifier * process.hltHighLevel * process.muon_skim
+)
 
 # And also at the start of the nano not to run code that we don't need
 process.nanoSequenceMC.insert(0, process.muon_skim)
 process.nanoSequenceMC.insert(0, process.hltHighLevel)
+process.nanoSequenceMC.insert(0, process.gen_model_verifier)
 process.nanoSequenceMC.insert(0, process.genWeightSum)
 
 # Path and EndPath definitions
