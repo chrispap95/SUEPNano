@@ -268,7 +268,7 @@ when_to_transfer_output = ON_EXIT
 
 # Requirements and resources
 x509userproxy = $ENV(X509_USER_PROXY)
-request_memory = {args.memory,}
+request_memory = {args.memory}
 +REQUIRED_OS = "rhel8"
 +DesiredOS = REQUIRED_OS
 
